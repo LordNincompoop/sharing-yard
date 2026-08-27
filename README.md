@@ -4,7 +4,11 @@ A division game for one classroom screen, one game controller and thirty
 students. No reading required, no clock, one HTML file that runs offline on an
 old machine.
 
-**Playable prototype.** Download `index.html` and double-click it — that's the
+**Teach the lesson: https://lordnincompoop.github.io/sharing-yard/slides.html**
+
+**Just play: https://lordnincompoop.github.io/sharing-yard/**
+
+**Playable prototype.** Or download `index.html` and double-click it — that's the
 whole install.
 
 | File | What it is |
