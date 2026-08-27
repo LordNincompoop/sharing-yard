@@ -30,6 +30,13 @@ claw refuses one more.
 | **B** | Back to the cars from the answer strip |
 | **Y** | Tip every car back into the pile |
 
+Watch out on the way across: **barrels** drift through the carry lane, and if one
+touches the car or the rope it falls and rolls back to the pile. The claw's grip
+also slips after about six seconds — the meter on the trolley shows how long you
+have. Dipping the claw ducks under a barrel. The pile itself is always safe.
+
+Each student picked gets **three problems**, then the reel spins again.
+
 On the first run the game asks you to press the button marked **A**, then the one
 marked **B**, and remembers. No controller? Arrow keys and Enter work too.
 

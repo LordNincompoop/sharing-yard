@@ -61,8 +61,29 @@ share the cars out themselves**, with a crane on a rail above the yard.
 
 Cars can be picked back **out** of a circle the same way, so a child who has
 made a mess can fix it without starting over. **Y** puts everything back in the
-pile. There is no timer anywhere in the game — a child can push cars around for
-as long as they like and nothing on screen hurries them.
+pile. Nothing rushes the *thinking* — there is no clock on the question and no
+clock on the answer.
+
+### The yard hazards — for fun
+
+The carry is where the game is allowed to be a game.
+
+- **Barrels** drift back and forth through the lane between the pile and the
+  circles, bobbing as they go. If one touches the hanging car *or the crane
+  rope*, the car falls, clatters to the yard floor and rolls back into the pile.
+  One barrel to start, a third by the time a child is a dozen answers in.
+- **The grip slips.** A carried car can only be held for about six and a half
+  seconds. A meter on the trolley runs down, the rope creaks, the car starts
+  swinging harder, and then it goes.
+
+Both cost time and nothing else — no points lost, no wrong answer recorded, the
+car simply has to be fetched again. And the pile is a **safe zone**: barrels
+never drift far enough left to reach it, so picking a car up always works. That
+matters more than it sounds — a hazard that can camp on the one thing you must
+do is not fun, it is a wall.
+
+Ducking is real, too: dipping the claw drops the car below the barrel lane, so a
+child who watches the barrels can time the crossing.
 
 ### Why this matters more than it looks
 
@@ -202,9 +223,11 @@ flat.
 
 ## 6. The random student picker
 
-Before the game, and between questions, a picker chooses who takes the
-controller. Thirty students, one pad, so it is a **random draw** — not a queue,
-not a rota.
+Thirty students, one pad, so who plays next is a **random draw** — not a queue,
+not a rota. **A drawn student gets three problems**, then the crane goes back to
+the reel. Three is enough to settle into the crane and see both a sharing and a
+grouping question; it is short enough that nobody is watching one child for very
+long. Three dots at the top of the screen show where they are up to.
 
 - Numbers **1 to 30** on a reel. Press **A**, the reel spins and slows, and
   lands on a number that fills the screen.
