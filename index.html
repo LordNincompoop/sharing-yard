@@ -247,7 +247,7 @@ let state = St.BOOT;
 let t = 0;
 
 const scores = {};
-let student = 1, solved = 0;
+let student = 1, solved = 0, attempts = 0;
 let reelPos = 0, reelVel = 0, reelSpinning = false, reelLanded = false, reelTick = 0;
 
 let Q = null, cars = [], orderCounter = 0;
@@ -259,7 +259,7 @@ let fairNag = 0;
 const crane = { x: 800, y: 300, carry: null, dip: -1, dipZone: null, resolved: false, bump: 0 };
 
 const PILE = { x: 195, y: 520, r: 116 };
-const BAND = { x0: 386, x1: 1256, y: 520 };
+const BAND = { x0: 386, x1: 1430, y: 520 };
 const RAIL_Y = 206;
 /* the hoist: how far down the cable the claw hangs, driven by the stick */
 const CLAW_HIGH = 238, CLAW_LOW = 368;
@@ -301,28 +301,54 @@ function spawnGulls() {
   }
 }
 
+/* Difficulty climbs on questions attempted as well as solved, so a class
+   that is finding it hard still moves on instead of being stuck on the
+   smallest numbers all lesson. */
+const rnd = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+let recent = [];              // last few questions, so they do not repeat
+
+function pickQuestion() {
+  const lvl = solved + Math.floor(attempts / 3);
+  let maxCircles, maxPer, maxTotal;
+  if (lvl < 3)       { maxCircles = 4; maxPer = 4;  maxTotal = 10; }
+  else if (lvl < 8)  { maxCircles = 5; maxPer = 6;  maxTotal = 16; }
+  else if (lvl < 15) { maxCircles = 6; maxPer = 8;  maxTotal = 22; }
+  else               { maxCircles = 6; maxPer = 10; maxTotal = 24; }
+
+  for (let tries = 0; tries < 60; tries++) {
+    const circles = rnd(2, maxCircles);
+    const perCircle = rnd(lvl < 3 ? 1 : 2, maxPer);
+    const total = circles * perCircle;
+    if (total > maxTotal || total < 2) continue;
+
+    const mode = (solved < 2 || Math.random() < 0.5) ? "share" : "group";
+    // in grouping the answer IS the number of circles, so keep that drawable
+    if (mode === "group" && circles > 6) continue;
+
+    const key = mode + ":" + total + ":" + (mode === "share" ? circles : perCircle);
+    if (recent.indexOf(key) !== -1) continue;
+
+    recent.push(key);
+    if (recent.length > 5) recent.shift();
+    return mode === "share"
+      ? { total, mode, divisor: circles, circles, perCircle, answer: perCircle }
+      : { total, mode, divisor: perCircle, circles, perCircle, answer: circles };
+  }
+  // fallback that always works
+  return { total: 6, mode: "share", divisor: 3, circles: 3, perCircle: 2, answer: 2 };
+}
+
 function newQuestion() {
-  const lvl = solved;
-  let a, b;
-  if (lvl < 3)      { a = 2 + (Math.random() * 2 | 0); b = 1 + (Math.random() * 3 | 0); }
-  else if (lvl < 8) { a = 2 + (Math.random() * 4 | 0); b = 2 + (Math.random() * 3 | 0); }
-  else              { a = 2 + (Math.random() * 5 | 0); b = 2 + (Math.random() * 4 | 0); }
-
-  const total = a * b;
-  const mode = (solved < 3 || Math.random() < 0.5) ? "share" : "group";
-
-  Q = mode === "share"
-    ? { total, mode, divisor: a, circles: a, perCircle: b, answer: b }
-    : { total, mode, divisor: b, circles: a, perCircle: b, answer: a };
+  Q = pickQuestion();
 
   cars = [];
-  for (let i = 0; i < total; i++) cars.push({ g: -1, o: 0, x: PILE.x, y: PILE.y, w: 40, vy: 0, seeded: false });
+  for (let i = 0; i < Q.total; i++) cars.push({ g: -1, o: 0, x: PILE.x, y: PILE.y, w: 40, vy: 0, seeded: false });
   orderCounter = 0;
   crane.carry = null; crane.dip = -1; crane.x = PILE.x; crane.y = 300;
   carryT = 0; shake = 0; slipFlash = 0;
   spawnGulls();
 
-  const top = Math.max(8, Q.answer + 3);
+  const top = Math.min(12, Math.max(8, Q.answer + 3));
   answerOpts = [];
   for (let i = 1; i <= top; i++) answerOpts.push(i);
   answerSel = Math.max(0, Math.min(answerOpts.length - 1, Math.floor(top / 2) - 1));
@@ -540,6 +566,7 @@ function update(dt) {
       const ok = picked === Q.answer;
       result = { ok, picked, correct: Q.answer };
       resultT = 0;
+      attempts++;
       if (ok) { solved++; scores[student] = (scores[student] || 0) + 10; SFX.good(); }
       else { SFX.bad(); countUp = 0; countT = 0; }
       state = St.RESULT;
@@ -825,18 +852,35 @@ function drawGame() {
     inG.forEach((c, i) => ease(c, sl[i]));
   }
 
-  /* equation */
-  ctx.font = "800 100px " + FONT;
+  /* the whole sum across the top, answer and all */
+  const reveal = state === St.RESULT && (result.ok || resultT > 2.4);
   const sTotal = String(Q.total), sDiv = String(Q.divisor);
-  const wT = ctx.measureText(sTotal).width, wD = ctx.measureText(sDiv).width, wO = ctx.measureText(" ÷ ").width;
-  const ex = V.w / 2 - (wT + wO + wD) / 2 - 130;
-  text(sTotal, ex + wT / 2, 96, 100, C.dividend, "center", "800");
-  text("÷", ex + wT + wO / 2, 96, 80, C.dim, "center", "800");
-  text(sDiv, ex + wT + wO + wD / 2, 96, 100, C.divisor, "center", "800");
-  text("DIVIDEND", ex + wT / 2, 156, 19, C.dividend, "center", "700", 3);
-  text("DIVISOR", ex + wT + wO + wD / 2, 156, 19, C.divisor, "center", "700", 3);
+  const sAns = reveal ? String(Q.answer)
+             : ((state === St.ANSWER || state === St.RESULT) ? String(answerOpts[answerSel]) : "?");
+  ctx.font = "800 100px " + FONT;
+  const wT = ctx.measureText(sTotal).width, wD = ctx.measureText(sDiv).width,
+        wA = ctx.measureText(sAns).width;
+  ctx.font = "800 80px " + FONT;
+  const wO = ctx.measureText("  ÷  ").width, wE = ctx.measureText("  =  ").width;
+  let ex = V.w / 2 - (wT + wO + wD + wE + wA) / 2;
+
+  text(sTotal, ex + wT / 2, 92, 100, C.dividend, "center", "800");
+  text("DIVIDEND", ex + wT / 2, 152, 19, C.dividend, "center", "700", 3);
+  ex += wT;
+  text("÷", ex + wO / 2, 92, 80, C.dim, "center", "800");
+  ex += wO;
+  text(sDiv, ex + wD / 2, 92, 100, C.divisor, "center", "800");
+  text("DIVISOR", ex + wD / 2, 152, 19, C.divisor, "center", "700", 3);
   text(Q.mode === "share" ? "how many circles" : "how many in each circle",
-       ex + wT + wO + wD / 2, 180, 17, C.dim, "center", "600");
+       ex + wD / 2, 176, 17, C.dim, "center", "600");
+  ex += wD;
+  text("=", ex + wE / 2, 92, 80, C.dim, "center", "800");
+  ex += wE;
+  const ansCol = reveal ? C.quotient
+               : (state === St.RESULT ? C.remainder
+               : (state === St.ANSWER ? C.ink : C.faint));
+  text(sAns, ex + wA / 2, 92, 100, ansCol, "center", "800");
+  text("QUOTIENT", ex + wA / 2, 152, 19, reveal ? C.quotient : C.dim, "center", "700", 3);
 
   /* pile */
   const empty = pileCount() === 0;
@@ -895,20 +939,6 @@ function drawGame() {
     ctx.stroke();
     text(lay.length + (lay.length === 1 ? " circle" : " circles"), (x0 + x1) / 2, by + 42, 22,
          Q.mode === "share" ? C.divisor : C.quotient, "center", "700", 2);
-  }
-
-  /* answer */
-  const ax = 1442;
-  text("=", ax - 106, BAND.y, 80, C.dim, "center", "800");
-  const reveal = state === St.RESULT && (result.ok || resultT > 2.4);
-  if (reveal) {
-    text(String(Q.answer), ax, BAND.y, 160, C.quotient, "center", "800");
-    text("QUOTIENT", ax, BAND.y + 104, 19, C.quotient, "center", "700", 3);
-  } else if (state === St.ANSWER || state === St.RESULT) {
-    text(String(answerOpts[answerSel]), ax, BAND.y, 160, state === St.RESULT ? C.remainder : C.ink, "center", "800");
-    text("QUOTIENT", ax, BAND.y + 104, 19, C.dim, "center", "700", 3);
-  } else {
-    text("?", ax, BAND.y, 130, C.faint, "center", "800");
   }
 
   /* counting overlay after a wrong answer */
@@ -983,7 +1013,6 @@ function drawGame() {
   /* badges */
   text("STUDENT " + student, 40, 44, 21, C.dim, "left", "700", 3);
   text((scores[student] || 0) + " PTS", V.w - 40, 44, 21, C.dim, "right", "700", 3);
-  text(Q.mode === "share" ? "SHARING" : "GROUPING", V.w / 2, 44, 21, C.dim, "center", "700", 5);
   // progress through this student's turn: dots while they fit, else a count
   if (probsPerStudent <= 7) {
     for (let i = 0; i < probsPerStudent; i++) {

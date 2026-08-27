@@ -1,0 +1,530 @@
+<title>Sharing Fairly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Space+Mono:wght@400;700&display=swap">
+
+<style>
+:root{
+  --ground:#F5F3EC;
+  --panel:#EAE7DC;
+  --ink:#191B16;
+  --ink-2:#5C6154;
+  --rule:#D3D2C6;
+  --accent:#C8850C;
+  --knock:#F5F3EC;
+  --dividend:#256B8C;
+  --divisor:#C8850C;
+  --quotient:#3B7A49;
+  --remainder:#B93B26;
+  --cookie:#C98A3E;
+  --chip:#5B3A18;
+  --f-display:"Anton","Haettenschweiler","Arial Narrow",sans-serif;
+  --f-body:"Newsreader",Georgia,"Times New Roman",serif;
+  --f-util:"Space Mono",Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#14160F; --panel:#1E2118; --ink:#EDEEE4; --ink-2:#9AA091; --rule:#2F3329;
+    --accent:#E8B02A; --knock:#14160F; --dividend:#63BADB; --divisor:#E8B02A;
+    --quotient:#79C68C; --remainder:#E97050; --cookie:#D69A4E; --chip:#2A1B0A;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#14160F; --panel:#1E2118; --ink:#EDEEE4; --ink-2:#9AA091; --rule:#2F3329;
+  --accent:#E8B02A; --knock:#14160F; --dividend:#63BADB; --divisor:#E8B02A;
+  --quotient:#79C68C; --remainder:#E97050; --cookie:#D69A4E; --chip:#2A1B0A;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);
+  -webkit-font-smoothing:antialiased;overflow:hidden}
+
+#deck{height:100vh;height:100dvh;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+  align-items:center;padding:64px 48px 104px;text-align:center;overflow-y:auto}
+.slide.on{display:flex}
+
+h1{font-family:var(--f-display);font-weight:400;text-transform:uppercase;
+  font-size:clamp(48px,9vw,124px);line-height:.88;margin:0 0 20px;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:400;text-transform:uppercase;
+  font-size:clamp(30px,5.2vw,66px);line-height:.96;margin:0 0 26px;text-wrap:balance;max-width:19ch}
+.lead{font-size:clamp(19px,2.5vw,31px);line-height:1.42;max-width:24ch;margin:0 auto;color:var(--ink-2)}
+.lead.wide{max-width:34ch}
+.say{font-size:clamp(19px,2.4vw,30px);line-height:1.4;max-width:26ch;margin:26px auto 0;
+  color:var(--ink);font-weight:600}
+.eyebrow{font-family:var(--f-util);font-size:clamp(11px,1.2vw,14px);font-weight:700;
+  letter-spacing:.26em;text-transform:uppercase;color:var(--accent);margin-bottom:22px}
+
+/* the sum, big */
+.sum{font-family:var(--f-display);font-size:clamp(40px,7.5vw,104px);line-height:1;
+  margin:30px 0 0;letter-spacing:.02em}
+.sum .a{color:var(--dividend)} .sum .b{color:var(--divisor)} .sum .c{color:var(--quotient)}
+.sum .op{color:var(--ink-2)}
+.sumwords{display:flex;justify-content:center;gap:clamp(18px,4vw,64px);margin-top:10px;
+  font-family:var(--f-util);font-size:clamp(10px,1.15vw,14px);font-weight:700;letter-spacing:.18em;
+  text-transform:uppercase;flex-wrap:wrap}
+.sumwords .a{color:var(--dividend)} .sumwords .b{color:var(--divisor)} .sumwords .c{color:var(--quotient)}
+
+svg.art{display:block;width:min(100%,980px);height:auto;margin:8px auto 0}
+
+/* everyday grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:clamp(14px,2.4vw,30px);width:min(100%,1080px);margin:14px auto 0}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:5px;
+  padding:20px 18px;text-align:left}
+.card svg{display:block;width:100%;height:auto;max-height:74px;margin-bottom:12px}
+.card .t{font-size:clamp(15px,1.6vw,19px);line-height:1.35;margin:0 0 8px}
+.card .s{font-family:var(--f-util);font-weight:700;font-size:clamp(14px,1.5vw,18px);color:var(--accent)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,3vw,48px);
+  width:min(100%,1080px);margin:0 auto;align-items:start}
+.two .lab{font-family:var(--f-util);font-size:clamp(11px,1.3vw,15px);font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px}
+.two .note{font-size:clamp(14px,1.6vw,19px);color:var(--ink-2);margin-top:10px;line-height:1.4}
+@media (max-width:720px){ .two{grid-template-columns:1fr} }
+
+.big{font-family:var(--f-display);font-size:clamp(52px,11vw,150px);line-height:.9;
+  color:var(--quotient);margin:14px 0 0}
+
+/* controls */
+#bar{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;
+  justify-content:space-between;gap:14px;padding:12px 18px;background:var(--panel);
+  border-top:1px solid var(--rule);z-index:5}
+#bar .grp{display:flex;gap:8px;align-items:center}
+button{font-family:var(--f-util);font-size:12px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;padding:10px 17px;border:1px solid var(--ink);border-radius:2px;
+  background:transparent;color:var(--ink);cursor:pointer}
+button:hover{background:var(--ink);color:var(--knock)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button[disabled]{opacity:.32;cursor:default}
+button[disabled]:hover{background:transparent;color:var(--ink)}
+#count{font-family:var(--f-util);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--ink-2)}
+#hintbar{font-family:var(--f-util);font-size:11px;letter-spacing:.1em;color:var(--ink-2)}
+@media (max-width:720px){ #hintbar{display:none} }
+#prog{position:fixed;top:0;left:0;height:4px;background:var(--accent);z-index:6;transition:width .22s}
+@media (prefers-reduced-motion:reduce){ #prog{transition:none} }
+
+/* ---- the play slide: the real game, inside the deck ---- */
+.bigbtn{font-size:clamp(14px,1.7vw,19px);padding:18px 34px;margin-top:34px;
+  background:var(--accent);border-color:var(--accent);color:var(--knock);letter-spacing:.16em}
+.bigbtn:hover{background:var(--ink);border-color:var(--ink);color:var(--knock)}
+.tiny{font-family:var(--f-util);font-size:clamp(11px,1.2vw,14px);line-height:1.6;
+  color:var(--ink-2);max-width:44ch;margin:20px auto 0}
+.slide.play{padding-bottom:96px}
+.slide.play.playing{padding:18px 20px 92px;justify-content:flex-start}
+.slide.play.playing .preplay{display:none}
+.playstage{width:min(100%,1320px);margin:0 auto;display:flex;flex-direction:column;gap:12px}
+#frameHolder{width:100%;background:#12150E;border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+#frameHolder iframe{display:block;width:100%;height:min(70vh,760px);border:0}
+.prompts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.prompts span{font-family:var(--f-util);font-size:clamp(11px,1.25vw,14px);font-weight:700;
+  letter-spacing:.06em;padding:8px 13px;border:1px solid var(--rule);border-radius:2px;
+  background:var(--panel);color:var(--ink-2)}
+#stopbtn{align-self:center}
+</style>
+
+<div id="prog"></div>
+
+<div id="deck">
+
+<!-- 1 -->
+<section class="slide">
+  <div class="eyebrow">Maths · dividing</div>
+  <h1>Sharing<br>Fairly</h1>
+  <p class="lead wide">Dividing is just sharing things out so that everybody gets the same.</p>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <h2>You already know how to do this</h2>
+  <p class="lead wide">Six cookies. Two plates. Put them out so it is fair.</p>
+  <svg class="art" viewBox="0 0 900 250" role="img" aria-label="Six cookies shared onto two plates, three cookies on each plate.">
+    <defs>
+      <g id="ck">
+        <circle cx="0" cy="0" r="21" fill="var(--cookie)"/>
+        <circle cx="-7" cy="-6" r="3.4" fill="var(--chip)"/>
+        <circle cx="7" cy="-2" r="3.4" fill="var(--chip)"/>
+        <circle cx="-2" cy="8" r="3.4" fill="var(--chip)"/>
+        <circle cx="9" cy="10" r="2.6" fill="var(--chip)"/>
+      </g>
+    </defs>
+    <ellipse cx="250" cy="150" rx="150" ry="74" fill="none" stroke="currentColor" stroke-opacity=".38" stroke-width="4"/>
+    <ellipse cx="650" cy="150" rx="150" ry="74" fill="none" stroke="currentColor" stroke-opacity=".38" stroke-width="4"/>
+    <use href="#ck" x="195" y="130"/><use href="#ck" x="250" y="130"/><use href="#ck" x="305" y="130"/>
+    <use href="#ck" x="595" y="130"/><use href="#ck" x="650" y="130"/><use href="#ck" x="705" y="130"/>
+    <text x="250" y="242" text-anchor="middle" font-family="Space Mono,monospace" font-size="21" font-weight="700" fill="var(--quotient)">3 each</text>
+    <text x="650" y="242" text-anchor="middle" font-family="Space Mono,monospace" font-size="21" font-weight="700" fill="var(--quotient)">3 each</text>
+    <text x="450" y="150" text-anchor="middle" font-family="Anton,sans-serif" font-size="40" fill="currentColor" opacity=".3">+</text>
+  </svg>
+  <p class="sum"><span class="a">6</span> <span class="op">÷</span> <span class="b">2</span> <span class="op">=</span> <span class="c">3</span></p>
+  <p class="say">Six cookies shared between two plates is three on each plate.</p>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="eyebrow">Question one</div>
+  <h2>Twelve cookies,<br>three friends</h2>
+  <p class="lead wide">You know how many <b>friends</b> there are. You want to know how many each one gets.</p>
+  <svg class="art" viewBox="0 0 900 240" role="img" aria-label="Twelve cookies shared between three friends, four cookies each.">
+    <defs>
+      <g id="ck3">
+        <circle cx="0" cy="0" r="18" fill="var(--cookie)"/>
+        <circle cx="-6" cy="-5" r="3" fill="var(--chip)"/>
+        <circle cx="6" cy="-2" r="3" fill="var(--chip)"/>
+        <circle cx="-2" cy="7" r="3" fill="var(--chip)"/>
+      </g>
+    </defs>
+    <g fill="none" stroke="var(--divisor)" stroke-width="4">
+      <circle cx="160" cy="118" r="88"/><circle cx="450" cy="118" r="88"/><circle cx="740" cy="118" r="88"/>
+    </g>
+    <use href="#ck3" x="126" y="92"/><use href="#ck3" x="194" y="92"/>
+    <use href="#ck3" x="126" y="146"/><use href="#ck3" x="194" y="146"/>
+    <use href="#ck3" x="416" y="92"/><use href="#ck3" x="484" y="92"/>
+    <use href="#ck3" x="416" y="146"/><use href="#ck3" x="484" y="146"/>
+    <use href="#ck3" x="706" y="92"/><use href="#ck3" x="774" y="92"/>
+    <use href="#ck3" x="706" y="146"/><use href="#ck3" x="774" y="146"/>
+    <g font-family="Space Mono,monospace" font-size="19" font-weight="700" fill="var(--quotient)" text-anchor="middle">
+      <text x="160" y="232">4 each</text><text x="450" y="232">4 each</text><text x="740" y="232">4 each</text>
+    </g>
+  </svg>
+  <p class="sum"><span class="a">12</span> <span class="op">÷</span> <span class="b">3</span> <span class="op">=</span> <span class="c">4</span></p>
+  <p class="say">Twelve cookies shared between three friends is four cookies each.</p>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="eyebrow">Question two</div>
+  <h2>The same twelve,<br>a different question</h2>
+  <p class="lead wide">Now the bags hold <b>four cookies each</b>. You want to know how many bags you need.</p>
+  <svg class="art" viewBox="0 0 900 240" role="img" aria-label="Twelve cookies packed four to a bag, filling three bags.">
+    <g fill="none" stroke="var(--divisor)" stroke-width="4">
+      <path d="M96 60 h128 v148 a10 10 0 0 1 -10 10 h-108 a10 10 0 0 1 -10 -10 Z"/>
+      <path d="M386 60 h128 v148 a10 10 0 0 1 -10 10 h-108 a10 10 0 0 1 -10 -10 Z"/>
+      <path d="M676 60 h128 v148 a10 10 0 0 1 -10 10 h-108 a10 10 0 0 1 -10 -10 Z"/>
+      <path d="M96 60 l22 -22 h84 l22 22"/>
+      <path d="M386 60 l22 -22 h84 l22 22"/>
+      <path d="M676 60 l22 -22 h84 l22 22"/>
+    </g>
+    <use href="#ck3" x="130" y="108"/><use href="#ck3" x="190" y="108"/>
+    <use href="#ck3" x="130" y="164"/><use href="#ck3" x="190" y="164"/>
+    <use href="#ck3" x="420" y="108"/><use href="#ck3" x="480" y="108"/>
+    <use href="#ck3" x="420" y="164"/><use href="#ck3" x="480" y="164"/>
+    <use href="#ck3" x="710" y="108"/><use href="#ck3" x="770" y="108"/>
+    <use href="#ck3" x="710" y="164"/><use href="#ck3" x="770" y="164"/>
+    <g font-family="Space Mono,monospace" font-size="19" font-weight="700" fill="var(--quotient)" text-anchor="middle">
+      <text x="160" y="238">bag 1</text><text x="450" y="238">bag 2</text><text x="740" y="238">bag 3</text>
+    </g>
+  </svg>
+  <p class="sum"><span class="a">12</span> <span class="op">÷</span> <span class="b">4</span> <span class="op">=</span> <span class="c">3</span></p>
+  <p class="say">Twelve cookies, four to a bag, fills three bags.</p>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <h2>Two questions,<br>one picture</h2>
+  <div class="two">
+    <div>
+      <div class="lab" style="color:var(--dividend)">Sharing out</div>
+      <p class="sum" style="margin-top:0"><span class="a">12</span> <span class="op">÷</span> <span class="b">3</span> <span class="op">=</span> <span class="c">4</span></p>
+      <p class="note">You knew there were <b>3 friends</b>.<br>You found out they get <b>4 each</b>.</p>
+    </div>
+    <div>
+      <div class="lab" style="color:var(--dividend)">Making groups</div>
+      <p class="sum" style="margin-top:0"><span class="a">12</span> <span class="op">÷</span> <span class="b">4</span> <span class="op">=</span> <span class="c">3</span></p>
+      <p class="note">You knew each bag holds <b>4</b>.<br>You found out you need <b>3 bags</b>.</p>
+    </div>
+  </div>
+  <p class="say">Same twelve cookies. Same three groups of four. But you were asking two different questions — so watch what the answer is <em>counting</em>.</p>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="eyebrow">The proper words</div>
+  <h2>Every part<br>has a name</h2>
+  <p class="sum"><span class="a">12</span> <span class="op">÷</span> <span class="b">3</span> <span class="op">=</span> <span class="c">4</span></p>
+  <div class="sumwords">
+    <span class="a">Dividend</span><span class="b">Divisor</span><span class="c">Quotient</span>
+  </div>
+  <div class="two" style="margin-top:34px">
+    <div>
+      <div class="lab" style="color:var(--dividend)">Dividend</div>
+      <p class="note">How many you started with. All twelve cookies, before you shared any out.</p>
+    </div>
+    <div>
+      <div class="lab" style="color:var(--divisor)">Divisor</div>
+      <p class="note">The number you are dividing by. Here, the three friends.</p>
+    </div>
+  </div>
+  <p class="say" style="margin-top:22px"><b style="color:var(--quotient)">Quotient</b> is just a posh word for the answer.</p>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <h2>Fair means<br>exactly the same</h2>
+  <div class="two">
+    <div style="text-align:center">
+      <div class="lab" style="color:var(--remainder)">Not fair</div>
+      <svg class="art" viewBox="0 0 420 200" role="img" aria-label="Eight cookies split five and three between two plates, which is not fair.">
+        <circle cx="110" cy="96" r="82" fill="none" stroke="var(--remainder)" stroke-width="5"/>
+        <circle cx="310" cy="96" r="82" fill="none" stroke="var(--remainder)" stroke-width="5"/>
+        <use href="#ck3" x="76" y="70"/><use href="#ck3" x="120" y="70"/><use href="#ck3" x="164" y="70"/>
+        <use href="#ck3" x="90" y="122"/><use href="#ck3" x="140" y="122"/>
+        <use href="#ck3" x="288" y="70"/><use href="#ck3" x="332" y="70"/>
+        <use href="#ck3" x="310" y="122"/>
+        <g font-family="Anton,sans-serif" font-size="34" fill="var(--remainder)" text-anchor="middle">
+          <text x="110" y="196">5</text><text x="310" y="196">3</text>
+        </g>
+      </svg>
+    </div>
+    <div style="text-align:center">
+      <div class="lab" style="color:var(--quotient)">Fair</div>
+      <svg class="art" viewBox="0 0 420 200" role="img" aria-label="The same eight cookies split four and four, which is fair.">
+        <circle cx="110" cy="96" r="82" fill="none" stroke="var(--quotient)" stroke-width="5"/>
+        <circle cx="310" cy="96" r="82" fill="none" stroke="var(--quotient)" stroke-width="5"/>
+        <use href="#ck3" x="82" y="72"/><use href="#ck3" x="138" y="72"/>
+        <use href="#ck3" x="82" y="122"/><use href="#ck3" x="138" y="122"/>
+        <use href="#ck3" x="282" y="72"/><use href="#ck3" x="338" y="72"/>
+        <use href="#ck3" x="282" y="122"/><use href="#ck3" x="338" y="122"/>
+        <g font-family="Anton,sans-serif" font-size="34" fill="var(--quotient)" text-anchor="middle">
+          <text x="110" y="196">4</text><text x="310" y="196">4</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <p class="say">If one plate has more than the other, you have not divided yet. <b>Move one across and try again.</b></p>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="eyebrow">What if it does not fit?</div>
+  <h2>The one<br>left over</h2>
+  <p class="lead wide">Thirteen cookies between three friends. They get four each — and one cookie is still sitting there.</p>
+  <svg class="art" viewBox="0 0 900 232" role="img" aria-label="Thirteen cookies shared between three friends gives four each with one cookie left over.">
+    <g fill="none" stroke="var(--divisor)" stroke-width="4">
+      <circle cx="150" cy="112" r="82"/><circle cx="390" cy="112" r="82"/><circle cx="630" cy="112" r="82"/>
+    </g>
+    <use href="#ck3" x="120" y="88"/><use href="#ck3" x="180" y="88"/>
+    <use href="#ck3" x="120" y="138"/><use href="#ck3" x="180" y="138"/>
+    <use href="#ck3" x="360" y="88"/><use href="#ck3" x="420" y="88"/>
+    <use href="#ck3" x="360" y="138"/><use href="#ck3" x="420" y="138"/>
+    <use href="#ck3" x="600" y="88"/><use href="#ck3" x="660" y="88"/>
+    <use href="#ck3" x="600" y="138"/><use href="#ck3" x="660" y="138"/>
+    <circle cx="830" cy="112" r="46" fill="none" stroke="var(--remainder)" stroke-width="4" stroke-dasharray="8 8"/>
+    <use href="#ck3" x="830" y="112"/>
+    <text x="830" y="196" text-anchor="middle" font-family="Space Mono,monospace" font-size="18" font-weight="700" fill="var(--remainder)">left over</text>
+  </svg>
+  <p class="sum"><span class="a">13</span> <span class="op">÷</span> <span class="b">3</span> <span class="op">=</span> <span class="c">4</span> <span style="color:var(--remainder)">r 1</span></p>
+  <p class="say">That leftover has a name too. It is called the <b style="color:var(--remainder)">remainder</b>.</p>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="eyebrow">Out in the world</div>
+  <h2>You do this<br>all the time</h2>
+  <div class="grid">
+    <div class="card">
+      <svg viewBox="0 0 200 60" role="img" aria-label="An egg box.">
+        <rect x="6" y="14" width="84" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="3"/>
+        <rect x="104" y="14" width="84" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="3"/>
+        <g fill="var(--cookie)"><circle cx="22" cy="32" r="7"/><circle cx="48" cy="32" r="7"/><circle cx="74" cy="32" r="7"/>
+        <circle cx="120" cy="32" r="7"/><circle cx="146" cy="32" r="7"/><circle cx="172" cy="32" r="7"/></g>
+      </svg>
+      <p class="t">Twelve eggs, six to a box.</p>
+      <div class="s">12 ÷ 6 = 2 boxes</div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 200 60" role="img" aria-label="Four children sharing sweets.">
+        <g fill="none" stroke="currentColor" stroke-width="3">
+          <circle cx="30" cy="20" r="9"/><path d="M18 52 a12 12 0 0 1 24 0"/>
+          <circle cx="76" cy="20" r="9"/><path d="M64 52 a12 12 0 0 1 24 0"/>
+          <circle cx="122" cy="20" r="9"/><path d="M110 52 a12 12 0 0 1 24 0"/>
+          <circle cx="168" cy="20" r="9"/><path d="M156 52 a12 12 0 0 1 24 0"/>
+        </g>
+      </svg>
+      <p class="t">Twenty sweets for four friends.</p>
+      <div class="s">20 ÷ 4 = 5 each</div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 200 60" role="img" aria-label="A car with four wheels.">
+        <rect x="34" y="20" width="132" height="22" rx="7" fill="currentColor"/>
+        <path d="M62 20 L78 6 L124 6 L140 20 Z" fill="currentColor"/>
+        <circle cx="66" cy="46" r="9" fill="currentColor"/><circle cx="134" cy="46" r="9" fill="currentColor"/>
+      </svg>
+      <p class="t">Eight wheels, four on each car.</p>
+      <div class="s">8 ÷ 4 = 2 cars</div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 200 60" role="img" aria-label="Chairs arranged in rows.">
+        <g fill="var(--divisor)">
+          <rect x="10" y="8" width="26" height="18" rx="3"/><rect x="46" y="8" width="26" height="18" rx="3"/>
+          <rect x="82" y="8" width="26" height="18" rx="3"/><rect x="118" y="8" width="26" height="18" rx="3"/>
+          <rect x="154" y="8" width="26" height="18" rx="3"/>
+          <rect x="10" y="34" width="26" height="18" rx="3"/><rect x="46" y="34" width="26" height="18" rx="3"/>
+          <rect x="82" y="34" width="26" height="18" rx="3"/><rect x="118" y="34" width="26" height="18" rx="3"/>
+          <rect x="154" y="34" width="26" height="18" rx="3"/>
+        </g>
+      </svg>
+      <p class="t">Fifteen chairs in rows of five.</p>
+      <div class="s">15 ÷ 5 = 3 rows</div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 200 60" role="img" aria-label="A pizza cut into slices.">
+        <circle cx="100" cy="30" r="27" fill="none" stroke="currentColor" stroke-width="3"/>
+        <g stroke="currentColor" stroke-width="2.5">
+          <path d="M100 3 V57"/><path d="M73 30 H127"/><path d="M81 11 L119 49"/><path d="M119 11 L81 49"/>
+        </g>
+      </svg>
+      <p class="t">Ten slices between two of you.</p>
+      <div class="s">10 ÷ 2 = 5 each</div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 200 60" role="img" aria-label="Football players grouped into teams.">
+        <g fill="var(--quotient)">
+          <circle cx="26" cy="30" r="11"/><circle cx="54" cy="30" r="11"/><circle cx="82" cy="30" r="11"/>
+        </g>
+        <g fill="var(--dividend)">
+          <circle cx="126" cy="30" r="11"/><circle cx="154" cy="30" r="11"/><circle cx="182" cy="30" r="11"/>
+        </g>
+      </svg>
+      <p class="t">Twenty-four pupils, four teams.</p>
+      <div class="s">24 ÷ 4 = 6 in a team</div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="eyebrow">A shortcut</div>
+  <h2>Dividing undoes<br>timesing</h2>
+  <p class="lead wide">Three rows of four cookies is twelve. So twelve shared into three rows must be four.</p>
+  <svg class="art" viewBox="0 0 720 230" style="max-width:620px" role="img" aria-label="A rectangle of three rows of four cookies, showing three times four is twelve and twelve divided by three is four.">
+    <g>
+      <use href="#ck3" x="180" y="52"/><use href="#ck3" x="260" y="52"/><use href="#ck3" x="340" y="52"/><use href="#ck3" x="420" y="52"/>
+      <use href="#ck3" x="180" y="120"/><use href="#ck3" x="260" y="120"/><use href="#ck3" x="340" y="120"/><use href="#ck3" x="420" y="120"/>
+      <use href="#ck3" x="180" y="188"/><use href="#ck3" x="260" y="188"/><use href="#ck3" x="340" y="188"/><use href="#ck3" x="420" y="188"/>
+    </g>
+    <path d="M180 22 H420" stroke="var(--divisor)" stroke-width="4" fill="none"/>
+    <text x="300" y="12" text-anchor="middle" font-family="Space Mono,monospace" font-size="17" font-weight="700" fill="var(--divisor)">4 across</text>
+    <path d="M146 52 V188" stroke="var(--divisor)" stroke-width="4" fill="none"/>
+    <text x="132" y="124" text-anchor="end" font-family="Space Mono,monospace" font-size="17" font-weight="700" fill="var(--divisor)">3 down</text>
+    <text x="590" y="106" text-anchor="middle" font-family="Anton,sans-serif" font-size="30" fill="currentColor">3 × 4 = 12</text>
+    <text x="590" y="150" text-anchor="middle" font-family="Anton,sans-serif" font-size="30" fill="var(--quotient)">12 ÷ 3 = 4</text>
+  </svg>
+  <p class="say">If you know your times tables, you already know your dividing.</p>
+</section>
+
+<!-- 11 -->
+<section class="slide play" id="playSlide">
+  <div class="preplay">
+    <div class="eyebrow">Your turn</div>
+    <h2>Now you<br>drive the crane</h2>
+    <p class="lead wide">Cars in a pile, circles beside them. Pick a car up, carry it across, drop it in a circle — until every circle holds the same.</p>
+    <button id="playbtn" class="bigbtn">Start the game here</button>
+    <p class="tiny">It opens inside this slide, so you can keep talking while you play. Plug the controller in first — or use the arrow keys and Enter.</p>
+  </div>
+
+  <div class="playstage" id="playStage" hidden>
+    <div id="frameHolder"></div>
+    <div class="prompts" aria-label="Questions to ask while you play">
+      <span>How many cars altogether?</span>
+      <span>How many circles?</span>
+      <span>Will everyone get the same?</span>
+      <span>What do we call the answer?</span>
+    </div>
+    <button id="stopbtn">◀ Back to the slides</button>
+  </div>
+</section>
+
+</div>
+
+<div id="bar">
+  <div class="grp">
+    <button id="prev" aria-label="Previous slide">◀ Back</button>
+    <button id="next" aria-label="Next slide">Next ▶</button>
+  </div>
+  <span id="count">1 / 11</span>
+  <div class="grp">
+    <span id="hintbar">← → or space to move · F for full screen</span>
+    <button id="fs">Full screen</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var i = 0;
+  var prev = document.getElementById("prev");
+  var next = document.getElementById("next");
+  var count = document.getElementById("count");
+  var prog = document.getElementById("prog");
+  var fs = document.getElementById("fs");
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.classList.toggle("on", k === i); });
+    count.textContent = (i + 1) + " / " + slides.length;
+    prog.style.width = ((i + 1) / slides.length * 100) + "%";
+    prev.disabled = i === 0;
+    next.disabled = i === slides.length - 1;
+    var live = slides[i];
+    if (live) live.scrollTop = 0;
+    if (typeof stopGame === "function" && slides[i] !== playSlide) stopGame();
+  }
+  prev.addEventListener("click", function () { show(i - 1); });
+  next.addEventListener("click", function () { show(i + 1); });
+
+  /* ---- the play slide runs the real game in an iframe ---- */
+  var playSlide = document.getElementById("playSlide");
+  var playStage = document.getElementById("playStage");
+  var holder = document.getElementById("frameHolder");
+  var playing = false;
+
+  function startGame() {
+    if (playing) return;
+    holder.innerHTML = "";
+    var f = document.createElement("iframe");
+    f.src = "index.html";
+    f.title = "Sharing Yard, the game";
+    f.setAttribute("allow", "gamepad *; autoplay");
+    holder.appendChild(f);
+    playStage.hidden = false;
+    playSlide.classList.add("playing");
+    playing = true;
+    setTimeout(function () { try { f.focus(); } catch (err) {} }, 60);
+  }
+  function stopGame() {
+    if (!playing) return;
+    holder.innerHTML = "";          // stops the loop and the sound
+    playStage.hidden = true;
+    playSlide.classList.remove("playing");
+    playing = false;
+  }
+  document.getElementById("playbtn").addEventListener("click", startGame);
+  document.getElementById("stopbtn").addEventListener("click", stopGame);
+
+  document.addEventListener("keydown", function (e) {
+    /* while the game is up, the keys belong to the game */
+    if (playing) {
+      if (e.key === "Escape") { e.preventDefault(); stopGame(); }
+      return;
+    }
+    var k = e.key;
+    if (k === "ArrowRight" || k === " " || k === "PageDown" || k === "Enter") { e.preventDefault(); show(i + 1); }
+    else if (k === "ArrowLeft" || k === "PageUp" || k === "Backspace") { e.preventDefault(); show(i - 1); }
+    else if (k === "Home") { e.preventDefault(); show(0); }
+    else if (k === "End") { e.preventDefault(); show(slides.length - 1); }
+    else if (k === "f" || k === "F") { e.preventDefault(); toggleFs(); }
+  });
+
+  function toggleFs() {
+    try {
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); }
+      else { document.exitFullscreen(); }
+    } catch (err) {}
+  }
+  fs.addEventListener("click", toggleFs);
+
+  show(0);
+})();
+</script>

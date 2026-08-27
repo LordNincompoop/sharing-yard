@@ -5,8 +5,25 @@ students. No reading required, no clock, one HTML file that runs offline on an
 old machine.
 
 **Playable prototype.** Download `index.html` and double-click it — that's the
-whole install. The design notes are in [DESIGN.md](DESIGN.md), and
-[concept.html](concept.html) is the illustrated pitch.
+whole install.
+
+| File | What it is |
+| --- | --- |
+| [index.html](index.html) | The game |
+| [slides.html](slides.html) | A lesson deck you drive, with the game built into the last slide |
+| [DESIGN.md](DESIGN.md) | Design notes |
+| [concept.html](concept.html) | The illustrated pitch |
+
+## Teaching with it
+
+`slides.html` is eleven slides explaining division to a Year 3 / Grade 3 class in
+plain language and everyday pictures — cookies on plates, eggs in boxes, pupils
+in teams — building up to the three words (dividend, divisor, quotient) and to
+remainders. You drive it: arrow keys or space, **F** for full screen.
+
+The **last slide runs the actual game inside the deck**, so you can play in front
+of the class while you talk, then press Escape to drop back to the slides. It
+also carries a strip of questions to ask while you play.
 
 ## The idea
 
