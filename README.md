@@ -25,17 +25,22 @@ claw refuses one more.
 
 | Control | Does |
 | --- | --- |
-| Left stick (or ← →) | Drive the crane; pick the number on the answer strip |
+| Left stick ← → | Drive the crane along the rail; pick the number on the answer strip |
+| Left stick ↑ ↓ | Raise and lower the hoist — this is how you dodge |
 | **A** | Pick up a car · drop it · confirm |
 | **B** | Back to the cars from the answer strip |
 | **Y** | Tip every car back into the pile |
+| **−** (select) | Change how many problems each student gets — any time |
 
-Watch out on the way across: **barrels** drift through the carry lane, and if one
-touches the car or the rope it falls and rolls back to the pile. The claw's grip
-also slips after about six seconds — the meter on the trolley shows how long you
-have. Dipping the claw ducks under a barrel. The pile itself is always safe.
+Watch out on the way across: **gulls** fly through the yard, each at its own
+height, and clipping one drops the car — it falls to the floor and rolls back to
+the pile. Fly over them, or under them. The claw's grip also slips after about
+six seconds; the meter on the trolley shows how long you have. Only the car can
+be clipped, never the cable, and the pile itself is always safe.
 
-Each student picked gets **three problems**, then the reel spins again.
+Each student gets a set number of problems, then the reel spins again. A setup
+screen picks that number at the start (1–10, default 3), and **−** changes it
+mid-lesson — useful when time is short and half the class hasn't had a go.
 
 On the first run the game asks you to press the button marked **A**, then the one
 marked **B**, and remembers. No controller? Arrow keys and Enter work too.

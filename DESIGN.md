@@ -68,22 +68,33 @@ clock on the answer.
 
 The carry is where the game is allowed to be a game.
 
-- **Barrels** drift back and forth through the lane between the pile and the
-  circles, bobbing as they go. If one touches the hanging car *or the crane
-  rope*, the car falls, clatters to the yard floor and rolls back into the pile.
-  One barrel to start, a third by the time a child is a dozen answers in.
+- **Gulls** cross the yard, each at its own altitude, wings flapping. Clip one
+  with the car and it falls, clatters to the yard floor and rolls back into the
+  pile. One gull to start, a third by the time a child is a dozen answers in.
 - **The grip slips.** A carried car can only be held for about six and a half
-  seconds. A meter on the trolley runs down, the rope creaks, the car starts
-  swinging harder, and then it goes.
+  seconds. A meter on the trolley runs down, the cable creaks, the car swings
+  harder and harder, and then it goes.
 
 Both cost time and nothing else — no points lost, no wrong answer recorded, the
-car simply has to be fetched again. And the pile is a **safe zone**: barrels
-never drift far enough left to reach it, so picking a car up always works. That
-matters more than it sounds — a hazard that can camp on the one thing you must
-do is not fun, it is a wall.
+car simply has to be fetched again.
 
-Ducking is real, too: dipping the claw drops the car below the barrel lane, so a
-child who watches the barrels can time the crossing.
+### Two rules that keep a hazard fun instead of cruel
+
+- **Only the car can be clipped, never the cable.** The cable necessarily spans
+  the whole lane from rail to claw, so making it a target would mean a hazard
+  that cannot be dodged at any height. The car is a small box the child is
+  steering; that is the fair thing to ask them to protect.
+- **The pile is a safe zone.** Gulls never drift far enough left to reach it, so
+  picking a car up always works. A hazard that can camp on the one action you
+  must take is not a hazard, it is a wall.
+
+### The hoist is the dodge
+
+The left stick's **vertical** axis pays the cable out and reels it back in, so
+the child flies the car over a gull or drops it underneath. Each gull holds its
+own height, so with three of them crossing at three altitudes the run across
+becomes a real (and cheerful) piece of navigation. None of it touches the maths
+— it is the reward for paying attention, and the maths waits underneath.
 
 ### Why this matters more than it looks
 
@@ -182,10 +193,14 @@ broken in a way nobody can describe.
 | **X** | top | `buttons[3]` (Xbox Y) | Peek at the picture |
 | **Y** | left | `buttons[2]` (Xbox X) | Put every car back in the pile |
 
-The **left stick** (`axes[0]`) drives the crane, with a 0.18 deadzone. The d-pad
-does the same thing for a child who finds the stick fiddly, and the same stick
-moves the selection along the answer strip once the cars are placed — so the
-whole game is one stick and one button.
+The **left stick** does everything: `axes[0]` drives the crane along the rail,
+`axes[1]` raises and lowers the hoist, and once the cars are placed the same
+stick moves the selection along the answer strip. Deadzone 0.18; the d-pad
+mirrors it for a child who finds the stick fiddly. One stick and one button is
+the whole game.
+
+**−** (select, `buttons[8]`) changes how many problems each student gets, at any
+moment during the lesson — see below.
 
 The trap: the obvious binding is `buttons[0]` for "confirm", because that is A on
 an Xbox pad. On this hardware `buttons[0]` is the button printed **B**, which is
@@ -224,10 +239,18 @@ flat.
 ## 6. The random student picker
 
 Thirty students, one pad, so who plays next is a **random draw** — not a queue,
-not a rota. **A drawn student gets three problems**, then the crane goes back to
-the reel. Three is enough to settle into the crane and see both a sharing and a
-grouping question; it is short enough that nobody is watching one child for very
-long. Three dots at the top of the screen show where they are up to.
+not a rota. A drawn student gets a set number of problems, then the crane goes
+back to the reel. Dots at the top of the screen show where they are up to — a
+plain count once there are more than seven.
+
+**The turn length is the teacher's dial, and it moves during the lesson.** A
+setup screen at the start picks anything from one to ten, and pressing **−**
+(select) at any point — mid-question, mid-answer, on the picker — bumps it and
+shows what it changed to. Three is a sensible default: enough to settle into the
+crane and meet both a sharing and a grouping question. Drop it to one when the
+lesson is running short and half the class still hasn't had a go; push it up when
+a child is on a roll. The change takes effect from the current turn, so
+shortening it mid-turn hands the pad on at the next answer.
 
 - Numbers **1 to 30** on a reel. Press **A**, the reel spins and slows, and
   lands on a number that fills the screen.

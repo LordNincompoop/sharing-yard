@@ -91,10 +91,10 @@ let bind = (function () {
 })();
 function saveBind(b) { try { localStorage.setItem("sharingyard.bind", JSON.stringify(b)); } catch (e) {} }
 
-const IN = { A: 0, B: 0, X: 0, Y: 0, L: 0, R: 0, left: 0, right: 0, plus: 0 };
+const IN = { A: 0, B: 0, X: 0, Y: 0, L: 0, R: 0, left: 0, right: 0, up: 0, down: 0, plus: 0, select: 0 };
 const WAS = Object.assign({}, IN);
 const KEY = {};
-let padName = "", lastRawPress = -1, stick = 0;
+let padName = "", lastRawPress = -1, stick = 0, stickY = 0;
 
 function pollPad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -104,7 +104,7 @@ function pollPad() {
 
   for (const k in IN) WAS[k] = IN[k];
   for (const k in IN) IN[k] = 0;
-  stick = 0;
+  stick = 0; stickY = 0;
 
   if (gp) {
     const b = gp.buttons, bd = bind || DEFAULT_BIND;
@@ -117,13 +117,19 @@ function pollPad() {
     if (down(bd.Y)) IN.Y = 1;
     if (down(4) || down(6)) IN.L = 1;
     if (down(5) || down(7)) IN.R = 1;
+    if (down(8)) IN.select = 1;   // the - button, Switch's select
     if (down(9)) IN.plus = 1;
     if (down(14)) IN.left = 1;
     if (down(15)) IN.right = 1;
-    const ax = gp.axes[0] || 0;
+    if (down(12)) IN.up = 1;
+    if (down(13)) IN.down = 1;
+    const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
     stick = Math.abs(ax) > 0.18 ? ax : 0;
+    stickY = Math.abs(ay) > 0.18 ? ay : 0;
     if (ax < -0.55) IN.left = 1;
     if (ax > 0.55) IN.right = 1;
+    if (ay < -0.55) IN.up = 1;
+    if (ay > 0.55) IN.down = 1;
   } else {
     lastRawPress = -1;
   }
@@ -133,13 +139,16 @@ function pollPad() {
   if (KEY.Backspace) IN.B = 1;
   if (KEY.p) IN.X = 1;
   if (KEY.r) IN.Y = 1;
+  if (KEY['-']) IN.select = 1;
   if (KEY.ArrowLeft) { IN.left = 1; stick = -1; }
   if (KEY.ArrowRight) { IN.right = 1; stick = 1; }
+  if (KEY.ArrowUp) { IN.up = 1; stickY = -1; }
+  if (KEY.ArrowDown) { IN.down = 1; stickY = 1; }
 }
 const hit = k => IN[k] && !WAS[k];
 
 addEventListener("keydown", e => {
-  if ([" ", "Enter", "Backspace", "ArrowLeft", "ArrowRight"].includes(e.key)) e.preventDefault();
+  if ([" ", "Enter", "Backspace", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
   KEY[e.key.length === 1 ? e.key.toLowerCase() : e.key] = 1;
   audioOn();
 });
@@ -233,7 +242,7 @@ function gridSlots(n, cx, cy, r) {
 }
 
 /* ---------------- state ---------------- */
-const St = { BOOT: "boot", CAL_B: "calB", PICKER: "picker", MOVE: "move", ANSWER: "answer", RESULT: "result" };
+const St = { BOOT: "boot", CAL_B: "calB", SETUP: "setup", PICKER: "picker", MOVE: "move", ANSWER: "answer", RESULT: "result" };
 let state = St.BOOT;
 let t = 0;
 
@@ -247,34 +256,47 @@ let result = null, resultT = 0, countUp = -1, countT = 0;
 let fairNag = 0;
 
 /* car.g :  -1 pile  |  -2 in the claw  |  -3 falling  |  0..n circle index */
-const crane = { x: 800, carry: null, dip: -1, dipZone: null, resolved: false, bump: 0 };
+const crane = { x: 800, y: 300, carry: null, dip: -1, dipZone: null, resolved: false, bump: 0 };
 
-const PILE = { x: 195, y: 500, r: 122 };
-const BAND = { x0: 386, x1: 1256, y: 500 };
-const RAIL_Y = 232, CLAW_REST = 300;
-const GROUND = 692;
+const PILE = { x: 195, y: 520, r: 116 };
+const BAND = { x0: 386, x1: 1256, y: 520 };
+const RAIL_Y = 206;
+/* the hoist: how far down the cable the claw hangs, driven by the stick */
+const CLAW_HIGH = 238, CLAW_LOW = 368;
+const GROUND = 700;
 
-/* --- for fun: barrels drift through the lane the cars are carried in --- */
-const BARREL_TOP = 266, BARREL_BOT = 348;
-let barrels = [];
+/* --- for fun: gulls cross the yard at their own heights --- */
+const GULL_TOP = 306, GULL_BOT = 330;
+let gulls = [];
 let carryT = 0;                 // hold a car too long and it slips
 const CARRY_MAX = 6.5;
 let shake = 0, slipFlash = 0;
 
-/* three problems per student, then the crane goes to somebody else */
-const PROBLEMS_PER_STUDENT = 3;
+/* how many problems each student gets before the crane moves on.
+   The teacher sets this on the setup screen; it is remembered. */
+let probsPerStudent = (function () {
+  try {
+    const v = parseInt(localStorage.getItem("sharingyard.probs"), 10);
+    if (v >= 1 && v <= 10) return v;
+  } catch (e) {}
+  return 3;
+})();
+function saveProbs() { try { localStorage.setItem("sharingyard.probs", String(probsPerStudent)); } catch (e) {} }
 let probIdx = 0;
+let setupSel = 0;
+let toastT = 0, toastMsg = "";
 
-function spawnBarrels() {
-  barrels = [];
+function spawnGulls() {
+  gulls = [];
   const n = 1 + Math.min(2, Math.floor(solved / 4));
   for (let i = 0; i < n; i++) {
-    barrels.push({
+    gulls.push({
       x: BAND.x0 + 40 + Math.random() * (BAND.x1 - BAND.x0 - 40),
-      y: BARREL_TOP + Math.random() * (BARREL_BOT - BARREL_TOP),
-      vx: (Math.random() < 0.5 ? -1 : 1) * (145 + Math.random() * 115),
+      // each gull keeps its own altitude, so you go over one and under the next
+      y: GULL_TOP + (n === 1 ? Math.random() : i / (n - 1)) * (GULL_BOT - GULL_TOP),
+      vx: (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 110),
       bob: Math.random() * 6.28,
-      spin: Math.random() * 6.28
+      flap: Math.random() * 6.28
     });
   }
 }
@@ -296,9 +318,9 @@ function newQuestion() {
   cars = [];
   for (let i = 0; i < total; i++) cars.push({ g: -1, o: 0, x: PILE.x, y: PILE.y, w: 40, vy: 0, seeded: false });
   orderCounter = 0;
-  crane.carry = null; crane.dip = -1; crane.x = PILE.x;
+  crane.carry = null; crane.dip = -1; crane.x = PILE.x; crane.y = 300;
   carryT = 0; shake = 0; slipFlash = 0;
-  spawnBarrels();
+  spawnGulls();
 
   const top = Math.max(8, Q.answer + 3);
   answerOpts = [];
@@ -327,7 +349,7 @@ function openCircles() {
 function circleLayout() {
   const n = Q ? openCircles() : 1;
   const slot = (BAND.x1 - BAND.x0) / n;
-  const r = Math.min(120, slot / 2 - 16);
+  const r = Math.min(112, slot / 2 - 16);
   const out = [];
   for (let i = 0; i < n; i++) out.push({ x: BAND.x0 + slot * (i + 0.5), y: BAND.y, r });
   return out;
@@ -341,9 +363,9 @@ function zoneAt(x, lay) {
 
 function currentClawY(lay) {
   const z = zoneAt(crane.x, lay);
-  const deepY = z ? (z.type === "pile" ? PILE.y - 46 : lay[z.i].y - 46) : CLAW_REST;
+  const deepY = z ? (z.type === "pile" ? PILE.y - 46 : lay[z.i].y - 46) : crane.y;
   const dipAmt = crane.dip >= 0 ? Math.sin(crane.dip * Math.PI) : 0;
-  return CLAW_REST + (deepY - CLAW_REST) * dipAmt;
+  return crane.y + (deepY - crane.y) * dipAmt;
 }
 
 /* the car slips out of the claw and falls to the yard floor */
@@ -373,12 +395,23 @@ function update(dt) {
   if (crane.bump > 0) crane.bump = Math.max(0, crane.bump - dt * 4);
   if (shake > 0) shake = Math.max(0, shake - dt * 3.2);
   if (slipFlash > 0) slipFlash = Math.max(0, slipFlash - dt * 0.8);
+  if (toastT > 0) toastT = Math.max(0, toastT - dt);
+
+  /* the - button (select) adjusts the turn length at any time, mid-lesson */
+  if (hit("select") && state !== St.BOOT && state !== St.CAL_B) {
+    probsPerStudent = probsPerStudent % 10 + 1;
+    saveProbs();
+    if (state === St.SETUP) setupSel = probsPerStudent - 1;
+    toastMsg = probsPerStudent === 1 ? "1 PROBLEM EACH" : probsPerStudent + " PROBLEMS EACH";
+    toastT = 1.8;
+    SFX.tick();
+  }
 
   if (state === St.BOOT) {
     if (!bind) {
       if (lastRawPress >= 0) { audioOn(); bind = { A: lastRawPress }; state = St.CAL_B; SFX.tick(); }
-      else if (KEY.Enter) { audioOn(); bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startPicker(); }
-    } else if (hit("A")) { audioOn(); startPicker(); }
+      else if (KEY.Enter) { audioOn(); bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startSetup(); }
+    } else if (hit("A")) { audioOn(); startSetup(); }
     else if (KEY.s && lastRawPress < 0 && KEY.Enter) { bind = null; }
     return;
   }
@@ -387,8 +420,15 @@ function update(dt) {
     if (lastRawPress >= 0 && lastRawPress !== bind.A) {
       bind.B = lastRawPress;
       if (bind.A === 1) { bind.X = 3; bind.Y = 2; } else { bind.X = 2; bind.Y = 3; }
-      saveBind(bind); SFX.tick(); startPicker();
-    } else if (KEY.Enter) { bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startPicker(); }
+      saveBind(bind); SFX.tick(); startSetup();
+    } else if (KEY.Enter) { bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startSetup(); }
+    return;
+  }
+
+  if (state === St.SETUP) {
+    const d = heldDir(dt);
+    if (d) { setupSel = Math.max(0, Math.min(9, setupSel + d)); SFX.tick(); }
+    if (hit("A")) { probsPerStudent = setupSel + 1; saveProbs(); SFX.good(); startPicker(); }
     return;
   }
 
@@ -405,8 +445,10 @@ function update(dt) {
         SFX.good();
       }
     } else if (!reelLanded) {
+      if (hit("plus")) { startSetup(); return; }
       if (hit("A")) { reelSpinning = true; reelVel = 32 + Math.random() * 24; SFX.tick(); }
     } else {
+      if (hit("plus")) { startSetup(); return; }
       if (hit("A")) { newQuestion(); state = St.MOVE; }
       if (hit("Y")) reelLanded = false;
     }
@@ -422,6 +464,12 @@ function update(dt) {
     crane.x += dir * 780 * dt;
     const minX = PILE.x, maxX = lay.length ? lay[lay.length - 1].x : BAND.x1;
     crane.x = Math.max(minX, Math.min(maxX, crane.x));
+
+    // the hoist: push the stick up or down to shorten or pay out the cable
+    let vdir = stickY;
+    if (!vdir) vdir = IN.down ? 1 : (IN.up ? -1 : 0);
+    crane.y += vdir * 580 * dt;
+    crane.y = Math.max(CLAW_HIGH, Math.min(CLAW_LOW, crane.y));
 
     // grab / drop
     if (hit("A") && crane.dip < 0) {
@@ -440,32 +488,30 @@ function update(dt) {
       crane.carry = null; carryT = 0; orderCounter = 0; SFX.deny();
     }
 
-    /* ---- barrels drift along the carry lane ---- */
-    for (const b of barrels) {
+    /* ---- gulls cross the yard ---- */
+    for (const b of gulls) {
       b.x += b.vx * dt;
-      b.bob += dt * 2.2;
-      b.spin += dt * b.vx * 0.011;
-      // barrels never reach the pile — picking a car up is always safe
+      b.bob += dt * 1.8;
+      b.flap += dt * (2.6 + Math.abs(b.vx) * 0.004);
+      // gulls never reach the pile — picking a car up is always safe
       if (b.x < BAND.x0 - 34) { b.x = BAND.x0 - 34; b.vx = Math.abs(b.vx); }
       if (b.x > BAND.x1 + 30) { b.x = BAND.x1 + 30; b.vx = -Math.abs(b.vx); }
     }
 
-    /* ---- carrying: the timer, and anything the barrels touch ---- */
+    /* ---- carrying: the grip timer ---- */
     if (crane.carry) {
       carryT += dt;
       if (carryT > CARRY_MAX - 2 && Math.random() < dt * 6) SFX.creak();
       if (carryT >= CARRY_MAX) dropCarry();
     }
+    /* only the car itself can be clipped — never the cable, which
+       necessarily spans the whole lane and would be impossible to dodge */
     if (crane.carry) {
       const cy = currentClawY(lay);
       const cx0 = crane.x - 31, cx1 = crane.x + 31, cy0 = cy + 14, cy1 = cy + 46;
-      const rY0 = RAIL_Y + 8, rY1 = cy - 22;
-      for (const b of barrels) {
-        const by = b.y + Math.sin(b.bob) * 6;
-        const bx0 = b.x - 16, bx1 = b.x + 16, by0 = by - 22, by1 = by + 22;
-        const hitsCar = !(cx1 < bx0 || cx0 > bx1 || cy1 < by0 || cy0 > by1);
-        const hitsRope = crane.x > bx0 && crane.x < bx1 && !(rY1 < by0 || rY0 > by1);
-        if (hitsCar || hitsRope) { dropCarry(); break; }
+      for (const b of gulls) {
+        const by = b.y + Math.sin(b.bob) * 4;
+        if (!(cx1 < b.x - 22 || cx0 > b.x + 22 || cy1 < by - 12 || cy0 > by + 12)) { dropCarry(); break; }
       }
     }
 
@@ -513,7 +559,7 @@ function update(dt) {
     }
     if (resultT > 0.7 && hit("A")) {
       probIdx++;
-      if (probIdx >= PROBLEMS_PER_STUDENT) startPicker();
+      if (probIdx >= probsPerStudent) startPicker();
       else { newQuestion(); state = St.MOVE; }
     }
     if (resultT > 0.7 && hit("B") && !result.ok) { state = St.ANSWER; result = null; countUp = -1; }
@@ -544,6 +590,11 @@ function resolveDip() {
   SFX.grab();
 }
 
+function startSetup() {
+  state = St.SETUP;
+  setupSel = probsPerStudent - 1;
+}
+
 function startPicker() {
   state = St.PICKER;
   probIdx = 0;
@@ -562,8 +613,19 @@ function draw() {
 
   if (state === St.BOOT) drawBoot();
   else if (state === St.CAL_B) drawCalB();
+  else if (state === St.SETUP) drawSetup();
   else if (state === St.PICKER) drawPicker();
   else drawGame();
+
+  if (toastT > 0) {
+    const a = Math.min(1, toastT / 0.4);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = C.divisor;
+    const w = 420, h = 62;
+    roundRect(V.w / 2 - w / 2, 8, w, h, 12); ctx.fill();
+    text(toastMsg, V.w / 2, 40, 30, C.bg, "center", "800", 4);
+    ctx.globalAlpha = 1;
+  }
 }
 
 function drawBoot() {
@@ -593,6 +655,31 @@ function drawCalB() {
   text("this one puts a car back", V.w / 2, 690, 23, C.dim, "center", "600");
 }
 
+function drawSetup() {
+  text("HOW MANY PROBLEMS", V.w / 2, 210, 38, C.ink, "center", "800", 6);
+  text("DOES EACH STUDENT GET?", V.w / 2, 262, 38, C.ink, "center", "800", 6);
+
+  const n = 10, bw = 104, gap = 14;
+  const sx = V.w / 2 - (n * bw + (n - 1) * gap) / 2;
+  for (let i = 0; i < n; i++) {
+    const x = sx + i * (bw + gap), y = 400;
+    if (i === setupSel) {
+      ctx.fillStyle = C.divisor;
+      roundRect(x - 6, y - 6, bw + 12, 112, 12); ctx.fill();
+      text(String(i + 1), x + bw / 2, y + 50, 62, C.bg, "center", "800");
+    } else {
+      ctx.strokeStyle = C.faint; ctx.lineWidth = 3;
+      roundRect(x, y, bw, 100, 10); ctx.stroke();
+      text(String(i + 1), x + bw / 2, y + 50, 46, C.dim, "center", "700");
+    }
+  }
+
+  text("◀ ▶  choose   ·   A  start the lesson", V.w / 2, 610, 30, C.quotient, "center", "800", 3);
+  text("thirty students — " + (setupSel + 1) + " each is " + ((setupSel + 1) * 30) + " problems to get all the way round",
+       V.w / 2, 690, 22, C.dim, "center", "600");
+  text("press  −  any time during the lesson to change this", V.w / 2, 826, 19, C.dim, "center", "600");
+}
+
 function drawPicker() {
   text("WHO HAS THE CONTROLLER?", V.w / 2, 148, 32, C.dim, "center", "700", 8);
   text("1 – 30", V.w / 2, 246, 21, C.dim, "center", "600", 4);
@@ -620,26 +707,49 @@ function drawPicker() {
   else if (reelSpinning) text("• • •", V.w / 2, 690, 38, C.dim, "center", "800", 5);
   else {
     text("STUDENT " + student + "  —  PRESS  A  TO PLAY", V.w / 2, 690, 36, C.quotient, "center", "800", 3);
-    text(PROBLEMS_PER_STUDENT + " problems, then the crane moves on", V.w / 2, 748, 23, C.dim, "center", "600");
+    text(probsPerStudent === 1 ? "1 problem, then the crane moves on"
+                                : probsPerStudent + " problems, then the crane moves on",
+         V.w / 2, 748, 23, C.dim, "center", "600");
     if (scores[student]) text(scores[student] + " points so far", V.w / 2, 786, 21, C.dim, "center", "600");
-    text("Y — spin again", V.w / 2, 826, 19, C.dim, "center", "600");
+    text("Y — spin again   ·   −  change how many problems each", V.w / 2, 826, 19, C.dim, "center", "600");
   }
 }
 
-function drawBarrel(x, y, spin) {
-  const w = 40, h = 50;
+function drawGull(x, y, flap, dir) {
+  const f = Math.sin(flap);
   ctx.save();
   ctx.translate(x, y);
-  ctx.fillStyle = "#B4611F";
-  roundRect(-w / 2, -h / 2, w, h, 9); ctx.fill();
-  ctx.strokeStyle = "#7A3D10"; ctx.lineWidth = 4;
+  ctx.scale(dir < 0 ? -1 : 1, 1);
+
+  // far wing, behind the body
+  ctx.fillStyle = "#8794A0";
   ctx.beginPath();
-  ctx.moveTo(-w / 2 + 2, -h * 0.22); ctx.lineTo(w / 2 - 2, -h * 0.22);
-  ctx.moveTo(-w / 2 + 2, h * 0.22); ctx.lineTo(w / 2 - 2, h * 0.22);
-  ctx.stroke();
-  ctx.strokeStyle = "#8F4A16"; ctx.lineWidth = 2.5;
-  const s = Math.sin(spin) * (w * 0.18);
-  ctx.beginPath(); ctx.moveTo(s, -h / 2 + 5); ctx.lineTo(s, h / 2 - 5); ctx.stroke();
+  ctx.moveTo(-2, -2);
+  ctx.quadraticCurveTo(-14, -6 + f * 16, -26, 2 + f * 20);
+  ctx.quadraticCurveTo(-10, 2 + f * 6, -2, 2);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = "#EFEDE0";
+  ctx.beginPath(); ctx.ellipse(0, 0, 19, 9, 0, 0, Math.PI * 2); ctx.fill();   // body
+  ctx.beginPath(); ctx.moveTo(-14, -3); ctx.lineTo(-30, -10); ctx.lineTo(-27, 2);
+  ctx.closePath(); ctx.fill();                                                // tail
+  ctx.beginPath(); ctx.arc(15, -7, 8, 0, Math.PI * 2); ctx.fill();            // head
+
+  ctx.fillStyle = "#E8B02A";                                                  // beak
+  ctx.beginPath(); ctx.moveTo(21, -9); ctx.lineTo(33, -6); ctx.lineTo(21, -3);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = "#12150E";                                                  // eye
+  ctx.beginPath(); ctx.arc(17, -9, 1.9, 0, Math.PI * 2); ctx.fill();
+
+  // near wing, over the body
+  ctx.fillStyle = "#C9D2DA";
+  ctx.beginPath();
+  ctx.moveTo(0, -3);
+  ctx.quadraticCurveTo(-10, -10 - f * 22, -20, -6 - f * 28);
+  ctx.quadraticCurveTo(-6, 0 - f * 8, 0, 1);
+  ctx.closePath(); ctx.fill();
+
   ctx.restore();
 }
 
@@ -720,19 +830,19 @@ function drawGame() {
   const sTotal = String(Q.total), sDiv = String(Q.divisor);
   const wT = ctx.measureText(sTotal).width, wD = ctx.measureText(sDiv).width, wO = ctx.measureText(" ÷ ").width;
   const ex = V.w / 2 - (wT + wO + wD) / 2 - 130;
-  text(sTotal, ex + wT / 2, 108, 100, C.dividend, "center", "800");
-  text("÷", ex + wT + wO / 2, 108, 80, C.dim, "center", "800");
-  text(sDiv, ex + wT + wO + wD / 2, 108, 100, C.divisor, "center", "800");
-  text("DIVIDEND", ex + wT / 2, 172, 19, C.dividend, "center", "700", 3);
-  text("DIVISOR", ex + wT + wO + wD / 2, 172, 19, C.divisor, "center", "700", 3);
+  text(sTotal, ex + wT / 2, 96, 100, C.dividend, "center", "800");
+  text("÷", ex + wT + wO / 2, 96, 80, C.dim, "center", "800");
+  text(sDiv, ex + wT + wO + wD / 2, 96, 100, C.divisor, "center", "800");
+  text("DIVIDEND", ex + wT / 2, 156, 19, C.dividend, "center", "700", 3);
+  text("DIVISOR", ex + wT + wO + wD / 2, 156, 19, C.divisor, "center", "700", 3);
   text(Q.mode === "share" ? "how many circles" : "how many in each circle",
-       ex + wT + wO + wD / 2, 198, 17, C.dim, "center", "600");
+       ex + wT + wO + wD / 2, 180, 17, C.dim, "center", "600");
 
   /* pile */
   const empty = pileCount() === 0;
   circleOutline(PILE.x, PILE.y, PILE.r, C.dividend, empty ? 4 : 6, [14, 12]);
   if (empty) text("empty", PILE.x, PILE.y, 24, C.dividend, "center", "600");
-  text("THE PILE", PILE.x, PILE.y + PILE.r + 42, 19, C.dividend, "center", "700", 3);
+  text("THE PILE", PILE.x, PILE.y + PILE.r + 38, 19, C.dividend, "center", "700", 3);
 
   /* circles */
   const settled = empty && !crane.carry;
@@ -753,12 +863,12 @@ function drawGame() {
   if (state === St.MOVE) drawCrane(lay);
   if (crane.carry) drawCar(crane.carry.x, crane.carry.y, crane.carry.w, C.divisor);
 
-  /* barrels drift in front, so what they touch is never in doubt */
-  if (state === St.MOVE) for (const b of barrels) drawBarrel(b.x, b.y + Math.sin(b.bob) * 6, b.spin);
+  /* gulls fly in front, so what they clip is never in doubt */
+  if (state === St.MOVE) for (const b of gulls) drawGull(b.x, b.y + Math.sin(b.bob) * 4, b.flap, b.vx);
 
   if (slipFlash > 0.02) {
     ctx.globalAlpha = Math.min(1, slipFlash);
-    text("DROPPED IT!", V.w / 2, 300, 46, C.remainder, "center", "800", 6);
+    text("DROPPED IT!", V.w / 2, 252, 46, C.remainder, "center", "800", 6);
     ctx.globalAlpha = 1;
   }
 
@@ -770,14 +880,14 @@ function drawGame() {
            n === inCircle(0) ? C.dim : C.remainder, "center", "800");
     }
     ctx.globalAlpha = fairNag;
-    text("every circle needs the same number", V.w / 2, 742, 30, C.remainder, "center", "700", 2);
+    text("every circle needs the same number", V.w / 2, 726, 30, C.remainder, "center", "700", 2);
     ctx.globalAlpha = 1;
   }
 
   /* brace under the row */
   if (lay.length && !(settled && state === St.MOVE && fairNag > 0.2)) {
     const x0 = lay[0].x - lay[0].r, x1 = lay[lay.length - 1].x + lay[lay.length - 1].r;
-    const by = BAND.y + lay[0].r + 30;
+    const by = BAND.y + lay[0].r + 28;
     ctx.strokeStyle = Q.mode === "share" ? C.divisor : C.quotient;
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -825,7 +935,7 @@ function drawGame() {
     const n = answerOpts.length, bw = 82, gap = 12;
     const sx = V.w / 2 - (n * bw + (n - 1) * gap) / 2;
     for (let i = 0; i < n; i++) {
-      const x = sx + i * (bw + gap), y = 764;
+      const x = sx + i * (bw + gap), y = 758;
       if (i === answerSel) {
         ctx.fillStyle = state === St.RESULT ? (result.ok ? C.quotient : C.remainder) : C.ink;
         roundRect(x - 4, y - 4, bw + 8, 74, 10); ctx.fill();
@@ -842,11 +952,11 @@ function drawGame() {
   let hint = "";
   if (state === St.MOVE) {
     hint = crane.carry
-      ? "move the stick  ·  A — drop the car"
-      : "move the stick  ·  A — pick up a car" + (pileCount() === 0 ? "  ·  Y — start again" : "");
+      ? "stick ←→ drive  ·  stick ↑↓ raise and lower  ·  A — drop the car"
+      : "stick ←→ drive  ·  stick ↑↓ raise and lower  ·  A — pick up a car" + (pileCount() === 0 ? "  ·  Y — start again" : "");
   } else if (state === St.ANSWER) hint = "◀ ▶ pick the number  ·  A — that's my answer  ·  B — back to the cars";
   else if (state === St.RESULT) hint = (result.ok || resultT > 2.4)
-    ? (probIdx + 1 >= PROBLEMS_PER_STUDENT ? "A — next student" : "A — next problem")
+    ? (probIdx + 1 >= probsPerStudent ? "A — next student" : "A — next problem")
     : "";
   if (hint) text(hint, V.w / 2, 866, 21, C.dim, "center", "600", 1);
 
@@ -854,7 +964,7 @@ function drawGame() {
   if (state === St.MOVE && !crane.carry && cars.every(c => c.g === -1)) {
     ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 4);
     text(Q.mode === "share" ? "share them out — one circle at a time" : "fill a circle, then the next one opens",
-         V.w / 2, 690, 27, C.divisor, "center", "700", 2);
+         V.w / 2, 812, 27, C.divisor, "center", "700", 2);
     ctx.globalAlpha = 1;
   }
 
@@ -862,11 +972,11 @@ function drawGame() {
     if (result.ok) {
       const pop = Math.min(1, resultT * 4);
       ctx.globalAlpha = pop;
-      text("YES", V.w / 2, 690, 58 + pop * 6, C.quotient, "center", "800", 8);
+      text("YES", V.w / 2, 292, 58 + pop * 6, C.quotient, "center", "800", 8);
       ctx.globalAlpha = 1;
     } else if (resultT > 2.4) {
       text(Q.mode === "share" ? "count one circle again" : "count the circles again",
-           V.w / 2, 690, 30, C.remainder, "center", "700", 2);
+           V.w / 2, 292, 30, C.remainder, "center", "700", 2);
     }
   }
 
@@ -874,11 +984,15 @@ function drawGame() {
   text("STUDENT " + student, 40, 44, 21, C.dim, "left", "700", 3);
   text((scores[student] || 0) + " PTS", V.w - 40, 44, 21, C.dim, "right", "700", 3);
   text(Q.mode === "share" ? "SHARING" : "GROUPING", V.w / 2, 44, 21, C.dim, "center", "700", 5);
-  // three problems each — dots rather than a fraction to read
-  for (let i = 0; i < PROBLEMS_PER_STUDENT; i++) {
-    const x = 40 + 20 + i * 30, y = 78;
-    ctx.fillStyle = i < probIdx ? C.quotient : (i === probIdx ? C.divisor : C.faint);
-    ctx.beginPath(); ctx.arc(x, y, i === probIdx ? 10 : 8, 0, Math.PI * 2); ctx.fill();
+  // progress through this student's turn: dots while they fit, else a count
+  if (probsPerStudent <= 7) {
+    for (let i = 0; i < probsPerStudent; i++) {
+      const x = 60 + i * 30, y = 78;
+      ctx.fillStyle = i < probIdx ? C.quotient : (i === probIdx ? C.divisor : C.faint);
+      ctx.beginPath(); ctx.arc(x, y, i === probIdx ? 10 : 8, 0, Math.PI * 2); ctx.fill();
+    }
+  } else {
+    text((probIdx + 1) + " / " + probsPerStudent, 40, 80, 21, C.divisor, "left", "800", 2);
   }
 }
 
