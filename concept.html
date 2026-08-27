@@ -1,0 +1,677 @@
+<title>Sharing Yard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Space+Mono:wght@400;700&display=swap">
+
+<style>
+:root{
+  --ground:#F2F1EB;
+  --panel:#E8E7DF;
+  --ink:#1A1C18;
+  --ink-2:#5B6055;
+  --rule:#D4D4C9;
+  --accent:#C8850C;
+  --knock:#F2F1EB;
+  --dividend:#2A6E8E;
+  --divisor:#C8850C;
+  --quotient:#3E7A4C;
+  --remainder:#B93B26;
+
+  --f-display:"Anton","Haettenschweiler","Arial Narrow",sans-serif;
+  --f-body:"Newsreader",Georgia,"Times New Roman",serif;
+  --f-util:"Space Mono",Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#15170F;
+    --panel:#1E2118;
+    --ink:#ECEDE3;
+    --ink-2:#99A090;
+    --rule:#2E3228;
+    --accent:#E8B02A;
+    --knock:#15170F;
+    --dividend:#63BADB;
+    --divisor:#E8B02A;
+    --quotient:#79C68C;
+    --remainder:#E97050;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#15170F;
+  --panel:#1E2118;
+  --ink:#ECEDE3;
+  --ink-2:#99A090;
+  --rule:#2E3228;
+  --accent:#E8B02A;
+  --knock:#15170F;
+  --dividend:#63BADB;
+  --divisor:#E8B02A;
+  --quotient:#79C68C;
+  --remainder:#E97050;
+}
+
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:19px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1040px;margin:0 auto;padding:0 28px 110px}
+.col{max-width:64ch}
+p{margin:0 0 1.05em}
+b,strong{font-weight:600}
+a{color:inherit}
+
+.mast{padding:70px 0 38px;border-bottom:3px solid var(--ink)}
+.eyebrow{font-family:var(--f-util);font-size:11px;font-weight:700;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(56px,11vw,128px);
+  line-height:.86;text-transform:uppercase;margin:0 0 22px;text-wrap:balance}
+.stand{font-size:22px;line-height:1.5;max-width:36ch;margin:0}
+.stand .hl{background:linear-gradient(transparent 62%,var(--accent) 62%,var(--accent) 92%,transparent 92%)}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+.fact{font-family:var(--f-util);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-2);border:1px solid var(--rule);border-radius:2px;padding:6px 10px}
+.fact.now{color:var(--knock);background:var(--ink);border-color:var(--ink)}
+
+section{padding-top:62px}
+.kicker{font-family:var(--f-util);font-size:11px;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-2);margin-bottom:13px;display:flex;align-items:center;gap:12px}
+.kicker::after{content:"";flex:1;height:1px;background:var(--rule)}
+h2{font-family:var(--f-display);font-weight:400;text-transform:uppercase;
+  font-size:clamp(30px,4.4vw,46px);line-height:1;margin:0 0 20px;text-wrap:balance}
+h3{font-family:var(--f-util);font-size:13px;font-weight:700;letter-spacing:.13em;
+  text-transform:uppercase;margin:36px 0 10px}
+
+figure{margin:36px 0 0}
+figure svg{display:block;width:100%;height:auto;color:var(--ink)}
+.plate{background:var(--panel);border:1px solid var(--rule);border-radius:3px;
+  padding:26px 24px 20px;overflow-x:auto}
+figcaption{font-family:var(--f-util);font-size:12px;line-height:1.6;color:var(--ink-2);
+  margin-top:15px;max-width:72ch}
+figcaption b{color:var(--ink);font-weight:700}
+
+.eq{font-family:var(--f-util);font-weight:700;color:var(--accent);white-space:nowrap}
+.tag{font-family:var(--f-util);font-size:.72em;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;padding:2px 7px;border-radius:2px;color:var(--knock);white-space:nowrap}
+.tag.dv{background:var(--dividend)}
+.tag.ds{background:var(--divisor)}
+.tag.qt{background:var(--quotient)}
+.tag.rm{background:var(--remainder)}
+kbd{font-family:var(--f-util);font-size:.78em;font-weight:700;border:1px solid var(--rule);
+  border-bottom-width:2px;border-radius:3px;padding:2px 6px;background:var(--panel)}
+
+.ladder{list-style:none;padding:0;margin:24px 0 0;counter-reset:rung;border-top:1px solid var(--rule)}
+.ladder li{counter-increment:rung;display:grid;grid-template-columns:52px 1fr;gap:20px;
+  padding:17px 0;border-bottom:1px solid var(--rule);align-items:start}
+.ladder li::before{content:counter(rung);font-family:var(--f-display);font-size:34px;
+  line-height:.8;color:var(--accent)}
+.rung-name{font-family:var(--f-util);font-size:13px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;display:block;margin-bottom:3px}
+.ladder p{margin:0;font-size:17.5px;line-height:1.55;color:var(--ink-2)}
+
+.tblwrap{overflow-x:auto;margin-top:24px}
+table{border-collapse:collapse;width:100%;font-size:16.5px}
+th,td{text-align:left;padding:11px 16px 11px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--f-util);font-size:10.5px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-2);padding-bottom:8px}
+td.n{font-family:var(--f-display);font-size:22px;color:var(--accent);width:36px;padding-right:0}
+td.k{font-family:var(--f-util);font-size:14px;white-space:nowrap}
+td code,p code{font-family:var(--f-util);font-size:.85em;background:var(--panel);
+  border:1px solid var(--rule);border-radius:2px;padding:1px 5px}
+
+.pull{margin:42px 0 0;padding:25px 28px;background:var(--ink);color:var(--knock);
+  border-radius:3px;font-size:21px;line-height:1.45;max-width:54ch}
+.pull .eq{color:var(--accent)}
+
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:0 40px;margin-top:12px}
+.notes>div{padding:19px 0;border-top:2px solid var(--ink)}
+.notes h3{margin-top:0}
+.notes p{font-size:17.5px;color:var(--ink-2);margin:0}
+
+.warnbox{margin-top:26px;padding:20px 24px;border:2px solid var(--remainder);border-radius:3px;
+  max-width:64ch}
+.warnbox h3{margin-top:0;color:var(--remainder)}
+.warnbox p:last-child{margin-bottom:0}
+
+.foot{margin-top:76px;padding-top:22px;border-top:3px solid var(--ink);
+  font-family:var(--f-util);font-size:12px;color:var(--ink-2)}
+
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+@media (max-width:640px){
+  body{font-size:17.5px}
+  .wrap{padding:0 18px 76px}
+  .plate{padding:16px 14px 14px}
+  .ladder li{grid-template-columns:34px 1fr;gap:14px}
+  .ladder li::before{font-size:26px}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="car" viewBox="0 0 30 21">
+      <rect x="0" y="6" width="30" height="11" rx="3" fill="currentColor"/>
+      <path d="M7 6 L11 0.6 L21 0.6 L25 6 Z" fill="currentColor"/>
+      <circle cx="8" cy="17.5" r="3.4" fill="currentColor"/>
+      <circle cx="22" cy="17.5" r="3.4" fill="currentColor"/>
+    </symbol>
+    <symbol id="carSm" viewBox="0 0 18 13">
+      <rect x="0" y="3.5" width="18" height="6.6" rx="2" fill="currentColor"/>
+      <path d="M4 3.5 L6.4 0.5 L12 0.5 L14 3.5 Z" fill="currentColor"/>
+      <circle cx="5" cy="10.4" r="2.2" fill="currentColor"/>
+      <circle cx="13.4" cy="10.4" r="2.2" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow">Concept · division · one screen, one controller</div>
+  <h1>Sharing<br>Yard</h1>
+  <p class="stand">Division as <span class="hl">a picture the child drives</span> — cars moved into groups, one press at a time, until the answer is something you can see.</p>
+  <div class="facts">
+    <span class="fact now">Status: concept</span>
+    <span class="fact">30 students, 1 controller</span>
+    <span class="fact">No reading required</span>
+    <span class="fact">No clock</span>
+    <span class="fact">One HTML file, offline</span>
+  </div>
+</header>
+
+<section>
+  <div class="kicker">The screen</div>
+  <h2>Everything is<br>on one screen</h2>
+  <div class="col">
+    <p>The equation across the top, a row of circles underneath, the answer on the right. Nothing else is on screen during a question — no HUD to read, no menu, nothing that needs knowing letters.</p>
+    <p>Each part of the division is colour-coded, and the same colour paints three things at once: <b>the word</b>, <b>the number in the equation</b>, and <b>the part of the picture it names</b>.</p>
+  </div>
+
+  <figure>
+    <div class="plate">
+      <svg viewBox="0 0 900 348" role="img" aria-label="The game screen: twelve divided by three across the top, an empty dashed pile circle on the left, three circles each holding four cars, and the answer four on the right. Dividend, divisor and quotient are labelled in three colours.">
+        <!-- equation -->
+        <text x="352" y="66" text-anchor="middle" font-family="Anton,sans-serif" font-size="56" fill="var(--dividend)">12</text>
+        <text x="424" y="66" text-anchor="middle" font-family="Anton,sans-serif" font-size="46" fill="currentColor" opacity=".45">÷</text>
+        <text x="486" y="66" text-anchor="middle" font-family="Anton,sans-serif" font-size="56" fill="var(--divisor)">3</text>
+        <text x="352" y="92" text-anchor="middle" font-family="Space Mono,monospace" font-size="11" font-weight="700" letter-spacing="2" fill="var(--dividend)">DIVIDEND</text>
+        <text x="486" y="92" text-anchor="middle" font-family="Space Mono,monospace" font-size="11" font-weight="700" letter-spacing="2" fill="var(--divisor)">DIVISOR</text>
+
+        <!-- pile -->
+        <circle cx="110" cy="200" r="58" fill="none" stroke="var(--dividend)" stroke-width="2.5" stroke-dasharray="7 7"/>
+        <text x="110" y="207" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" fill="var(--dividend)" opacity=".75">empty</text>
+        <text x="110" y="288" text-anchor="middle" font-family="Space Mono,monospace" font-size="11.5" fill="var(--dividend)">the pile — started with 12</text>
+
+        <!-- groups -->
+        <circle cx="292" cy="200" r="54" fill="none" stroke="var(--divisor)" stroke-width="2.5"/>
+        <circle cx="424" cy="200" r="54" fill="none" stroke="var(--divisor)" stroke-width="2.5"/>
+        <circle cx="556" cy="200" r="54" fill="none" stroke="var(--divisor)" stroke-width="2.5"/>
+        <g>
+          <use href="#carSm" x="268" y="176" width="18" height="13"/><use href="#carSm" x="298" y="176" width="18" height="13"/>
+          <use href="#carSm" x="268" y="202" width="18" height="13"/><use href="#carSm" x="298" y="202" width="18" height="13"/>
+          <use href="#carSm" x="400" y="176" width="18" height="13"/><use href="#carSm" x="430" y="176" width="18" height="13"/>
+          <use href="#carSm" x="400" y="202" width="18" height="13"/><use href="#carSm" x="430" y="202" width="18" height="13"/>
+          <use href="#carSm" x="532" y="176" width="18" height="13"/><use href="#carSm" x="562" y="176" width="18" height="13"/>
+          <use href="#carSm" x="532" y="202" width="18" height="13"/><use href="#carSm" x="562" y="202" width="18" height="13"/>
+        </g>
+        <!-- divisor brace under the row -->
+        <path d="M238 272 v8 h372 v-8" fill="none" stroke="var(--divisor)" stroke-width="2"/>
+        <text x="424" y="300" text-anchor="middle" font-family="Space Mono,monospace" font-size="11.5" fill="var(--divisor)">3 circles</text>
+
+        <!-- answer -->
+        <text x="676" y="216" text-anchor="middle" font-family="Anton,sans-serif" font-size="46" fill="currentColor" opacity=".45">=</text>
+        <text x="754" y="222" text-anchor="middle" font-family="Anton,sans-serif" font-size="76" fill="var(--quotient)">4</text>
+        <text x="754" y="252" text-anchor="middle" font-family="Space Mono,monospace" font-size="11" font-weight="700" letter-spacing="2" fill="var(--quotient)">QUOTIENT</text>
+        <text x="754" y="288" text-anchor="middle" font-family="Space Mono,monospace" font-size="11.5" fill="var(--quotient)">4 in every circle</text>
+
+        <!-- answer strip -->
+        <g font-family="Space Mono,monospace" font-size="13" text-anchor="middle">
+          <rect x="640" y="316" width="34" height="26" rx="4" fill="none" stroke="currentColor" stroke-opacity=".3"/>
+          <text x="657" y="334" fill="currentColor" opacity=".45">2</text>
+          <rect x="678" y="316" width="34" height="26" rx="4" fill="none" stroke="currentColor" stroke-opacity=".3"/>
+          <text x="695" y="334" fill="currentColor" opacity=".45">3</text>
+          <rect x="716" y="314" width="38" height="30" rx="4" fill="var(--quotient)"/>
+          <text x="735" y="334" fill="var(--knock)" font-weight="700">4</text>
+          <rect x="758" y="316" width="34" height="26" rx="4" fill="none" stroke="currentColor" stroke-opacity=".3"/>
+          <text x="775" y="334" fill="currentColor" opacity=".45">5</text>
+          <rect x="796" y="316" width="34" height="26" rx="4" fill="none" stroke="currentColor" stroke-opacity=".3"/>
+          <text x="813" y="334" fill="currentColor" opacity=".45">6</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>The strip at the bottom right is how answers are given — no typing. <b>Position carries the meaning and colour reinforces it:</b> the dividend is always left of the ÷, the divisor always right of it, the quotient always right of the =. A colour-blind child loses nothing.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="kicker">The mechanic</div>
+  <h2>One press,<br>one car</h2>
+  <div class="col">
+    <p>Pressing <kbd>A</kbd> moves one car out of the pile and into a circle. That is the core verb of the whole game, and it is the only thing a child has to understand to start playing.</p>
+    <p>Round and round until the pile is empty and every circle holds the same number. <kbd>R</kbd> fast-forwards the rest for someone who has already seen enough, <kbd>B</kbd> takes a car back out.</p>
+    <p>There is no timer anywhere. A child can sit on a question and push cars back and forth for as long as they like, and nothing on screen hurries them.</p>
+  </div>
+
+  <figure>
+    <div class="plate">
+      <svg viewBox="0 0 900 250" role="img" aria-label="Three frames of three divided by three: all three cars in the pile with the answer unknown; one car in flight to the second circle; one car in each of the three circles, giving the answer one.">
+        <!-- FRAME 1 -->
+        <text x="0" y="14" font-family="Space Mono,monospace" font-size="10.5" font-weight="700" letter-spacing="1.8" fill="currentColor" opacity=".55">01 · THE PILE</text>
+        <text x="140" y="56" text-anchor="middle" font-family="Anton,sans-serif" font-size="30" fill="currentColor">
+          <tspan fill="var(--dividend)">3</tspan><tspan opacity=".4"> ÷ </tspan><tspan fill="var(--divisor)">3</tspan><tspan opacity=".4"> = </tspan><tspan opacity=".35">?</tspan>
+        </text>
+        <circle cx="46" cy="150" r="36" fill="none" stroke="var(--dividend)" stroke-width="2" stroke-dasharray="6 6"/>
+        <use href="#carSm" x="37" y="126" width="18" height="13"/>
+        <use href="#carSm" x="37" y="144" width="18" height="13"/>
+        <use href="#carSm" x="37" y="162" width="18" height="13"/>
+        <circle cx="126" cy="150" r="28" fill="none" stroke="var(--divisor)" stroke-width="2"/>
+        <circle cx="188" cy="150" r="28" fill="none" stroke="var(--divisor)" stroke-width="2"/>
+        <circle cx="250" cy="150" r="28" fill="none" stroke="var(--divisor)" stroke-width="2"/>
+        <text x="150" y="218" text-anchor="middle" font-family="Space Mono,monospace" font-size="11.5" fill="currentColor" opacity=".6">3 cars, 3 circles</text>
+
+        <!-- FRAME 2 -->
+        <text x="310" y="14" font-family="Space Mono,monospace" font-size="10.5" font-weight="700" letter-spacing="1.8" fill="currentColor" opacity=".55">02 · PRESS A</text>
+        <text x="450" y="56" text-anchor="middle" font-family="Anton,sans-serif" font-size="30" fill="currentColor">
+          <tspan fill="var(--dividend)">3</tspan><tspan opacity=".4"> ÷ </tspan><tspan fill="var(--divisor)">3</tspan><tspan opacity=".4"> = </tspan><tspan opacity=".35">?</tspan>
+        </text>
+        <circle cx="356" cy="150" r="36" fill="none" stroke="var(--dividend)" stroke-width="2" stroke-dasharray="6 6"/>
+        <use href="#carSm" x="347" y="144" width="18" height="13"/>
+        <circle cx="436" cy="150" r="28" fill="none" stroke="var(--divisor)" stroke-width="2"/>
+        <use href="#carSm" x="427" y="144" width="18" height="13"/>
+        <circle cx="498" cy="150" r="28" fill="none" stroke="var(--divisor)" stroke-width="2"/>
+        <circle cx="560" cy="150" r="28" fill="none" stroke="var(--divisor)" stroke-width="2"/>
+        <path d="M380 118 Q440 88 496 120" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>
+        <polygon points="498,126 490,116 502,114" fill="var(--accent)"/>
+        <g style="color:var(--accent)"><use href="#carSm" x="428" y="86" width="18" height="13"/></g>
+        <text x="450" y="218" text-anchor="middle" font-family="Space Mono,monospace" font-size="11.5" fill="currentColor" opacity=".6">one car leaves the pile</text>
+
+        <!-- FRAME 3 -->
+        <text x="620" y="14" font-family="Space Mono,monospace" font-size="10.5" font-weight="700" letter-spacing="1.8" fill="currentColor" opacity=".55">03 · LEVEL</text>
+        <text x="760" y="56" text-anchor="middle" font-family="Anton,sans-serif" font-size="30" fill="currentColor">
+          <tspan fill="var(--dividend)">3</tspan><tspan opacity=".4"> ÷ </tspan><tspan fill="var(--divisor)">3</tspan><tspan opacity=".4"> = </tspan><tspan fill="var(--quotient)">1</tspan>
+        </text>
+        <circle cx="666" cy="150" r="36" fill="none" stroke="var(--dividend)" stroke-width="2" stroke-dasharray="6 6" opacity=".45"/>
+        <text x="666" y="155" text-anchor="middle" font-family="Space Mono,monospace" font-size="11" fill="var(--dividend)" opacity=".7">empty</text>
+        <circle cx="746" cy="150" r="28" fill="none" stroke="var(--quotient)" stroke-width="2.5"/>
+        <use href="#carSm" x="737" y="144" width="18" height="13"/>
+        <circle cx="808" cy="150" r="28" fill="none" stroke="var(--quotient)" stroke-width="2.5"/>
+        <use href="#carSm" x="799" y="144" width="18" height="13"/>
+        <circle cx="870" cy="150" r="28" fill="none" stroke="var(--quotient)" stroke-width="2.5"/>
+        <use href="#carSm" x="861" y="144" width="18" height="13"/>
+        <text x="790" y="218" text-anchor="middle" font-family="Space Mono,monospace" font-size="11.5" fill="var(--quotient)">1 in every circle</text>
+      </svg>
+    </div>
+    <figcaption>The sketch, animated. One deliberate change from it: the pile is drawn <b>separately</b> on the left as a dashed circle rather than being the first group — so <span class="eq">12 ÷ 3</span> looks exactly like <span class="eq">3 ÷ 3</span>, and an empty pile is a clear finish line. Easy to flip back if you want the sketch literally.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="kicker">The fork worth getting right</div>
+  <h2>Two pictures,<br>same symbols</h2>
+  <div class="col">
+    <p><span class="eq">3 ÷ 3 = 1</span> is one of <em>two</em> legitimate pictures, and they are worth separating before a line of code is written.</p>
+    <p><b>Sharing.</b> Three cars, <em>three circles</em>, one to each until the pile is empty. Every circle ends with one. The answer names <em>cars per circle</em>.</p>
+    <p><b>Grouping.</b> Three cars, <em>three to a circle</em>. Fill one and it is already full. The answer names <em>how many circles</em> — the "three cars in one group" reading.</p>
+    <p>Both are on the curriculum. Most apps only ever animate sharing, which is why a child stalls on <em>"eighteen sweets, three each, how many children?"</em> — that question hands you the group size and asks for the count, and the picture in their head answers the other question.</p>
+    <p>And here is why the vocabulary matters: between the two pictures, <span class="tag ds">divisor</span> and <span class="tag qt">quotient</span> <b>swap jobs</b>.</p>
+  </div>
+
+  <figure>
+    <div class="plate">
+      <svg viewBox="0 0 900 336" role="img" aria-label="Twelve cars filling three circles two ways. Sharing gives one car to each circle in rotation: twelve divided by three equals four, where three is the number of circles and four is how many each. Grouping fills each circle with four before opening the next: twelve divided by four equals three, where four is how many each and three is the number of circles.">
+        <!-- LEFT: SHARING -->
+        <text x="10" y="14" font-family="Space Mono,monospace" font-size="12" font-weight="700" letter-spacing="2" fill="currentColor">SHARING</text>
+        <text x="10" y="34" font-family="Space Mono,monospace" font-size="11.5" fill="currentColor" opacity=".62">one to each circle, round and round</text>
+        <circle cx="48" cy="128" r="34" fill="none" stroke="var(--dividend)" stroke-width="2" stroke-dasharray="6 6" opacity=".5"/>
+        <circle cx="160" cy="128" r="50" fill="none" stroke="var(--divisor)" stroke-width="2.5"/>
+        <circle cx="270" cy="128" r="50" fill="none" stroke="var(--divisor)" stroke-width="2.5"/>
+        <circle cx="380" cy="128" r="50" fill="none" stroke="var(--divisor)" stroke-width="2.5"/>
+        <g font-family="Space Mono,monospace" font-size="9.5" font-weight="700" fill="var(--knock)" text-anchor="middle">
+          <use href="#car" x="126" y="102" width="30" height="21"/><text x="141" y="114">1</text>
+          <use href="#car" x="164" y="102" width="30" height="21"/><text x="179" y="114">4</text>
+          <use href="#car" x="126" y="132" width="30" height="21"/><text x="141" y="144">7</text>
+          <use href="#car" x="164" y="132" width="30" height="21"/><text x="179" y="144">10</text>
+          <use href="#car" x="236" y="102" width="30" height="21"/><text x="251" y="114">2</text>
+          <use href="#car" x="274" y="102" width="30" height="21"/><text x="289" y="114">5</text>
+          <use href="#car" x="236" y="132" width="30" height="21"/><text x="251" y="144">8</text>
+          <use href="#car" x="274" y="132" width="30" height="21"/><text x="289" y="144">11</text>
+          <use href="#car" x="346" y="102" width="30" height="21"/><text x="361" y="114">3</text>
+          <use href="#car" x="384" y="102" width="30" height="21"/><text x="399" y="114">6</text>
+          <use href="#car" x="346" y="132" width="30" height="21"/><text x="361" y="144">9</text>
+          <use href="#car" x="384" y="132" width="30" height="21"/><text x="399" y="144">12</text>
+        </g>
+        <text x="10" y="230" font-family="Anton,sans-serif" font-size="40" fill="currentColor">
+          <tspan fill="var(--dividend)">12</tspan><tspan opacity=".4"> ÷ </tspan><tspan fill="var(--divisor)">3</tspan><tspan opacity=".4"> = </tspan><tspan fill="var(--quotient)">4</tspan>
+        </text>
+        <text x="10" y="262" font-family="Space Mono,monospace" font-size="11.5" fill="var(--divisor)">divisor 3 → the number of circles</text>
+        <text x="10" y="284" font-family="Space Mono,monospace" font-size="11.5" fill="var(--quotient)">quotient 4 → how many in each</text>
+
+        <path d="M450 20 L450 300" stroke="currentColor" stroke-opacity=".22" stroke-width="1.5"/>
+
+        <!-- RIGHT: GROUPING -->
+        <text x="490" y="14" font-family="Space Mono,monospace" font-size="12" font-weight="700" letter-spacing="2" fill="currentColor">GROUPING</text>
+        <text x="490" y="34" font-family="Space Mono,monospace" font-size="11.5" fill="currentColor" opacity=".62">fill a circle, then open the next</text>
+        <circle cx="518" cy="128" r="34" fill="none" stroke="var(--dividend)" stroke-width="2" stroke-dasharray="6 6" opacity=".5"/>
+        <circle cx="630" cy="128" r="50" fill="none" stroke="var(--quotient)" stroke-width="2.5"/>
+        <circle cx="740" cy="128" r="50" fill="none" stroke="var(--quotient)" stroke-width="2.5"/>
+        <circle cx="850" cy="128" r="50" fill="none" stroke="var(--quotient)" stroke-width="2.5"/>
+        <g font-family="Space Mono,monospace" font-size="9.5" font-weight="700" fill="var(--knock)" text-anchor="middle">
+          <use href="#car" x="596" y="102" width="30" height="21"/><text x="611" y="114">1</text>
+          <use href="#car" x="634" y="102" width="30" height="21"/><text x="649" y="114">2</text>
+          <use href="#car" x="596" y="132" width="30" height="21"/><text x="611" y="144">3</text>
+          <use href="#car" x="634" y="132" width="30" height="21"/><text x="649" y="144">4</text>
+          <use href="#car" x="706" y="102" width="30" height="21"/><text x="721" y="114">5</text>
+          <use href="#car" x="744" y="102" width="30" height="21"/><text x="759" y="114">6</text>
+          <use href="#car" x="706" y="132" width="30" height="21"/><text x="721" y="144">7</text>
+          <use href="#car" x="744" y="132" width="30" height="21"/><text x="759" y="144">8</text>
+          <use href="#car" x="816" y="102" width="30" height="21"/><text x="831" y="114">9</text>
+          <use href="#car" x="854" y="102" width="30" height="21"/><text x="869" y="114">10</text>
+          <use href="#car" x="816" y="132" width="30" height="21"/><text x="831" y="144">11</text>
+          <use href="#car" x="854" y="132" width="30" height="21"/><text x="869" y="144">12</text>
+        </g>
+        <text x="490" y="230" font-family="Anton,sans-serif" font-size="40" fill="currentColor">
+          <tspan fill="var(--dividend)">12</tspan><tspan opacity=".4"> ÷ </tspan><tspan fill="var(--divisor)">4</tspan><tspan opacity=".4"> = </tspan><tspan fill="var(--quotient)">3</tspan>
+        </text>
+        <text x="490" y="262" font-family="Space Mono,monospace" font-size="11.5" fill="var(--divisor)">divisor 4 → how many in each</text>
+        <text x="490" y="284" font-family="Space Mono,monospace" font-size="11.5" fill="var(--quotient)">quotient 3 → the number of circles</text>
+
+        <text x="450" y="322" text-anchor="middle" font-family="Space Mono,monospace" font-size="12" font-weight="700" letter-spacing="1.5" fill="currentColor" opacity=".7">SAME CARS · SAME END STATE · THE TWO WORDS TRADE PLACES</text>
+      </svg>
+    </div>
+    <figcaption>The number on each car is the order it was moved. A child taught only sharing has quietly learned <b>"quotient = how many each"</b> — which is wrong half the time. The words are what survive when the circles are gone.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="kicker">Vocabulary</div>
+  <h2>The parts<br>have names</h2>
+  <div class="col">
+    <p>The vocabulary is not a label pinned next to the game, it is painted onto the game. The words appear in fixed positions in fixed colours, so a child learns them by <em>location</em> long before reading them.</p>
+  </div>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Part</th><th>On screen</th><th>Sharing</th><th>Grouping</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag dv">Dividend</span></td><td>Cars in the pile at the start</td><td>the total</td><td>the total</td></tr>
+        <tr><td><span class="tag ds">Divisor</span></td><td>The number you divide by</td><td>how many <b>circles</b></td><td>how many <b>per circle</b></td></tr>
+        <tr><td><span class="tag qt">Quotient</span></td><td>The answer</td><td>how many <b>per circle</b></td><td>how many <b>circles</b></td></tr>
+        <tr><td><span class="tag rm">Remainder</span></td><td>Left in the pile</td><td>leftovers</td><td>leftovers</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notes">
+    <div>
+      <h3>Stage 1 — colours only</h3>
+      <p>No words at all. The colour coding quietly establishes which part is which before anything is named.</p>
+    </div>
+    <div>
+      <h3>Stage 2 on — words ride along</h3>
+      <p>The three words sit under the equation permanently, in their colours, in their fixed positions. A teacher-menu toggle turns them off for a class that cannot read yet; the colours stay and keep working.</p>
+    </div>
+    <div>
+      <h3>Now and then — name the part</h3>
+      <p>The game lights one part of the picture and offers the three words on a strip. D-pad to choose, <kbd>A</kbd> to confirm — same input as everything else, worth points like any question.</p>
+    </div>
+    <div>
+      <h3>The payoff</h3>
+      <p>At the top of the ladder, when the circles are gone and only <span class="eq">56 ÷ 8</span> is on screen, "which is the divisor?" is still answerable — it has been in the same place wearing the same colour for six stages.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">Input</div>
+  <h2>Switch pad,<br>Xbox mapping</h2>
+  <div class="col">
+    <p>The pad is a Nintendo Switch layout that Windows hands to the browser as an Xbox pad. That swaps both pairs of face buttons — the positions stay put, the letters printed on them do not.</p>
+  </div>
+
+  <figure>
+    <div class="plate">
+      <svg viewBox="0 0 760 286" role="img" aria-label="A controller diagram with Switch face-button letters: X on top, Y on the left, A on the right highlighted as confirm, B on the bottom. D-pad on the left chooses the number, shoulder buttons fast-forward, plus opens the teacher menu.">
+        <!-- body -->
+        <rect x="250" y="82" width="280" height="124" rx="34" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        <rect x="280" y="68" width="58" height="15" rx="7" fill="none" stroke="currentColor" stroke-width="2"/>
+        <rect x="442" y="68" width="58" height="15" rx="7" fill="none" stroke="currentColor" stroke-width="2"/>
+        <text x="309" y="80" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" font-weight="700" fill="currentColor">L</text>
+        <text x="471" y="80" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" font-weight="700" fill="currentColor">R</text>
+
+        <!-- d-pad -->
+        <path d="M303 122 h18 v14 h14 v18 h-14 v14 h-18 v-14 h-14 v-18 h14 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+
+        <!-- minus / plus -->
+        <rect x="356" y="139" width="20" height="10" rx="5" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/>
+        <rect x="404" y="139" width="20" height="10" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="366" y="147" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" fill="currentColor" opacity=".5">−</text>
+        <text x="414" y="148" text-anchor="middle" font-family="Space Mono,monospace" font-size="10" font-weight="700" fill="currentColor">+</text>
+
+        <!-- face buttons: X top, Y left, A right, B bottom -->
+        <circle cx="468" cy="121" r="13" fill="none" stroke="currentColor" stroke-width="2"/>
+        <text x="468" y="126" text-anchor="middle" font-family="Space Mono,monospace" font-size="12" font-weight="700" fill="currentColor">X</text>
+        <circle cx="445" cy="144" r="13" fill="none" stroke="currentColor" stroke-width="2"/>
+        <text x="445" y="149" text-anchor="middle" font-family="Space Mono,monospace" font-size="12" font-weight="700" fill="currentColor">Y</text>
+        <circle cx="491" cy="144" r="15" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
+        <text x="491" y="149" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" fill="var(--knock)">A</text>
+        <circle cx="468" cy="167" r="13" fill="none" stroke="currentColor" stroke-width="2"/>
+        <text x="468" y="172" text-anchor="middle" font-family="Space Mono,monospace" font-size="12" font-weight="700" fill="currentColor">B</text>
+
+        <!-- leaders left -->
+        <g stroke="currentColor" stroke-opacity=".4" stroke-width="1.5" fill="none">
+          <path d="M289 144 H238"/>
+          <path d="M309 68 V44 H238"/>
+          <path d="M414 139 V34 H238"/>
+        </g>
+        <g font-family="Space Mono,monospace" font-size="11.5" text-anchor="end" fill="currentColor">
+          <text x="232" y="148">◀ ▶ pick the number</text>
+          <text x="232" y="48">L / R — fast-forward</text>
+          <text x="232" y="38" opacity=".6">+ — teacher menu</text>
+        </g>
+
+        <!-- leaders right -->
+        <g stroke="var(--accent)" stroke-width="2" fill="none">
+          <path d="M506 144 H556"/>
+        </g>
+        <g stroke="currentColor" stroke-opacity=".4" stroke-width="1.5" fill="none">
+          <path d="M468 180 V228 H556"/>
+          <path d="M468 108 V52 H556"/>
+          <path d="M432 144 H396 V246 H556"/>
+        </g>
+        <g font-family="Space Mono,monospace" font-size="11.5" fill="currentColor">
+          <text x="562" y="141" font-weight="700" fill="var(--accent)">A — move one car</text>
+          <text x="562" y="157" fill="var(--accent)" opacity=".8">and confirm the answer</text>
+          <text x="562" y="232">B — take one back</text>
+          <text x="562" y="56">X — peek at the picture</text>
+          <text x="562" y="250">Y — replay the move</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>The letters shown are the ones <b>printed on the pad</b>. The browser reports different indices for the same physical buttons — see below.</figcaption>
+  </figure>
+
+  <div class="warnbox">
+    <h3>The trap</h3>
+    <p>The obvious binding for "confirm" is <code>buttons[0]</code>, because that is A on an Xbox pad. On this hardware <code>buttons[0]</code> is the button printed <b>B</b> — which is <em>cancel</em> on every Nintendo console the class has ever touched. Confirm must be <code>buttons[1]</code>.</p>
+  </div>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Printed</th><th>Position</th><th>Browser reports</th><th>Bound to</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><b>A</b></td><td class="k">right</td><td class="k"><code>buttons[1]</code></td><td><b>Move a car · confirm</b></td></tr>
+        <tr><td class="k"><b>B</b></td><td class="k">bottom</td><td class="k"><code>buttons[0]</code></td><td>Take a car back · go back</td></tr>
+        <tr><td class="k"><b>X</b></td><td class="k">top</td><td class="k"><code>buttons[3]</code></td><td>Peek at the picture</td></tr>
+        <tr><td class="k"><b>Y</b></td><td class="k">left</td><td class="k"><code>buttons[2]</code></td><td>Replay the move</td></tr>
+        <tr><td class="k"><b>L / R</b></td><td class="k">shoulders</td><td class="k"><code>4</code> / <code>5</code></td><td>Fast-forward the moving</td></tr>
+        <tr><td class="k"><b>+</b></td><td class="k">centre right</td><td class="k"><code>9</code></td><td>Teacher menu</td></tr>
+        <tr><td class="k"><b>D-pad ← →</b></td><td class="k">left</td><td class="k"><code>14</code> / <code>15</code></td><td>Choose the number</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col">
+    <h3>Calibration, because Bluetooth lies</h3>
+    <p>A Switch Pro pad reports the standard mapping over USB in Chrome, but over Bluetooth or through a third-party adapter the indices move. Rather than guess, the first run shows one screen — <b>"press the button that says A"</b>, then <b>"press the button that says B"</b> — and stores the result. Two presses and the hardware question is closed for good.</p>
+    <p>Because the pad is the only input, three more things are needed: a "no controller — press any button" screen that polls until one appears, handling for a pad falling asleep mid-lesson, and a keyboard fallback for the day the batteries are flat.</p>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">Before the game</div>
+  <h2>Who has<br>the controller</h2>
+  <div class="col">
+    <p>Thirty students, one pad. The picker draws a number from 1 to 30 — press <kbd>A</kbd>, the reel spins and slows and lands, big enough to read from the back of the room. Press <kbd>A</kbd> again to start the question.</p>
+    <p>Names are optional. The number is the identity, which is what makes it work with a class that cannot read yet.</p>
+  </div>
+
+  <figure>
+    <div class="plate">
+      <svg viewBox="0 0 900 226" role="img" aria-label="The student picker: a reel of numbers from one to thirty spinning and landing on seventeen, framed in the centre of the screen.">
+        <text x="450" y="24" text-anchor="middle" font-family="Space Mono,monospace" font-size="12" font-weight="700" letter-spacing="3" fill="currentColor" opacity=".65">WHO HAS THE CONTROLLER?</text>
+        <g stroke="currentColor" stroke-opacity=".13" stroke-width="2">
+          <path d="M40 84 H190"/><path d="M60 106 H190"/><path d="M30 128 H190"/>
+          <path d="M710 84 H860"/><path d="M710 106 H840"/><path d="M710 128 H870"/>
+        </g>
+        <text x="228" y="122" text-anchor="middle" font-family="Anton,sans-serif" font-size="30" fill="currentColor" opacity=".18">15</text>
+        <text x="318" y="126" text-anchor="middle" font-family="Anton,sans-serif" font-size="44" fill="currentColor" opacity=".32">16</text>
+        <rect x="384" y="46" width="132" height="112" rx="10" fill="none" stroke="var(--accent)" stroke-width="3"/>
+        <text x="450" y="140" text-anchor="middle" font-family="Anton,sans-serif" font-size="88" fill="var(--accent)">17</text>
+        <text x="582" y="126" text-anchor="middle" font-family="Anton,sans-serif" font-size="44" fill="currentColor" opacity=".32">18</text>
+        <text x="672" y="122" text-anchor="middle" font-family="Anton,sans-serif" font-size="30" fill="currentColor" opacity=".18">19</text>
+        <text x="450" y="192" text-anchor="middle" font-family="Space Mono,monospace" font-size="12.5" fill="currentColor" opacity=".7">1 – 30 · press A to spin · press A again to play</text>
+      </svg>
+    </div>
+    <figcaption>Optional toggle: <b>no repeats until all thirty have gone</b>, so the draw stays random but nobody gets missed across a lesson. Off by default — the plain draw is the simpler thing and it is what the picker is for.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="kicker">Progression</div>
+  <h2>The picture<br>has to fade</h2>
+  <div class="col">
+    <p>The point of the pictures is to stop needing them. Every stage runs the same four rungs, and a fluent child spends most turns on the last one — dropping back only when a new divisor appears.</p>
+  </div>
+  <ol class="ladder">
+    <li><span class="rung-name">Watch</span><p>The moving runs on its own. The child reads the finished circles and picks the number. Teaches what the picture <em>means</em>.</p></li>
+    <li><span class="rung-name">Move</span><p>The child drives it with <kbd>A</kbd>, then answers.</p></li>
+    <li><span class="rung-name">Predict</span><p>The answer is picked <em>first</em>; the moving then runs and either confirms it or contradicts it. This rung is where the learning happens.</p></li>
+    <li><span class="rung-name">Know</span><p>Symbols only. <kbd>X</kbd> peeks at the picture and costs points — never time, since nothing in this game is timed.</p></li>
+  </ol>
+</section>
+
+<section>
+  <div class="kicker">Feedback</div>
+  <h2>Wrong answers are<br>shown, not marked</h2>
+  <div class="col">
+    <p>No red cross, no buzzer. If a child picks <span class="eq">12 ÷ 3 = 5</span>, the game moves <em>their</em> answer: five into the first circle, five into the second, and the pile runs dry with the third holding two. <em>Not enough to go round</em> is something you can watch happen.</p>
+    <p>Too small fails the other way — cars still in the pile when everyone could have had one more.</p>
+    <p>Which is also the best argument for doing division with objects at all: <b>remainders</b>. One car that cannot join a full group is obvious in a pile and nearly invisible in a symbol.</p>
+  </div>
+
+  <figure>
+    <div class="plate">
+      <svg viewBox="0 0 900 252" role="img" aria-label="Left: moving five cars per circle empties the pile with the third circle holding only two. Right: thirteen cars fill three circles of four and leave one car in the pile as a remainder.">
+        <!-- LEFT -->
+        <text x="10" y="14" font-family="Space Mono,monospace" font-size="12" font-weight="700" letter-spacing="2" fill="var(--remainder)">THE CHILD PICKED 5</text>
+        <text x="10" y="34" font-family="Space Mono,monospace" font-size="11.5" fill="currentColor" opacity=".62">so the game moves 5 to a circle</text>
+        <circle cx="48" cy="124" r="32" fill="none" stroke="var(--dividend)" stroke-width="2" stroke-dasharray="6 6" opacity=".45"/>
+        <text x="48" y="128" text-anchor="middle" font-family="Space Mono,monospace" font-size="10" fill="var(--dividend)" opacity=".7">empty</text>
+        <circle cx="156" cy="124" r="48" fill="none" stroke="currentColor" stroke-width="2" stroke-opacity=".45"/>
+        <circle cx="268" cy="124" r="48" fill="none" stroke="currentColor" stroke-width="2" stroke-opacity=".45"/>
+        <circle cx="380" cy="124" r="48" fill="none" stroke="var(--remainder)" stroke-width="3"/>
+        <g>
+          <use href="#carSm" x="118" y="106" width="18" height="13"/><use href="#carSm" x="147" y="106" width="18" height="13"/><use href="#carSm" x="176" y="106" width="18" height="13"/>
+          <use href="#carSm" x="132" y="130" width="18" height="13"/><use href="#carSm" x="161" y="130" width="18" height="13"/>
+          <use href="#carSm" x="230" y="106" width="18" height="13"/><use href="#carSm" x="259" y="106" width="18" height="13"/><use href="#carSm" x="288" y="106" width="18" height="13"/>
+          <use href="#carSm" x="244" y="130" width="18" height="13"/><use href="#carSm" x="273" y="130" width="18" height="13"/>
+          <use href="#carSm" x="356" y="106" width="18" height="13"/><use href="#carSm" x="385" y="106" width="18" height="13"/>
+        </g>
+        <g stroke="var(--remainder)" stroke-width="1.5" stroke-dasharray="4 4" fill="none">
+          <rect x="352" y="128" width="24" height="20" rx="3"/>
+          <rect x="381" y="128" width="24" height="20" rx="3"/>
+          <rect x="410" y="128" width="24" height="20" rx="3" opacity=".55"/>
+        </g>
+        <text x="10" y="204" font-family="Space Mono,monospace" font-size="12" fill="var(--remainder)">the pile ran dry — the last circle is three short</text>
+        <text x="10" y="240" font-family="Anton,sans-serif" font-size="30" fill="currentColor" opacity=".5">12 ÷ 3 ≠ 5</text>
+
+        <path d="M450 20 L450 240" stroke="currentColor" stroke-opacity=".22" stroke-width="1.5"/>
+
+        <!-- RIGHT -->
+        <text x="490" y="14" font-family="Space Mono,monospace" font-size="12" font-weight="700" letter-spacing="2" fill="currentColor">13 CARS, 3 CIRCLES</text>
+        <text x="490" y="34" font-family="Space Mono,monospace" font-size="11.5" fill="currentColor" opacity=".62">one car cannot join a full group</text>
+        <circle cx="528" cy="124" r="32" fill="none" stroke="var(--remainder)" stroke-width="2.5" stroke-dasharray="6 6"/>
+        <g style="color:var(--remainder)"><use href="#carSm" x="519" y="118" width="18" height="13"/></g>
+        <circle cx="634" cy="124" r="46" fill="none" stroke="currentColor" stroke-width="2" stroke-opacity=".45"/>
+        <circle cx="744" cy="124" r="46" fill="none" stroke="currentColor" stroke-width="2" stroke-opacity=".45"/>
+        <circle cx="854" cy="124" r="46" fill="none" stroke="currentColor" stroke-width="2" stroke-opacity=".45"/>
+        <g>
+          <use href="#carSm" x="610" y="104" width="18" height="13"/><use href="#carSm" x="640" y="104" width="18" height="13"/>
+          <use href="#carSm" x="610" y="128" width="18" height="13"/><use href="#carSm" x="640" y="128" width="18" height="13"/>
+          <use href="#carSm" x="720" y="104" width="18" height="13"/><use href="#carSm" x="750" y="104" width="18" height="13"/>
+          <use href="#carSm" x="720" y="128" width="18" height="13"/><use href="#carSm" x="750" y="128" width="18" height="13"/>
+          <use href="#carSm" x="830" y="104" width="18" height="13"/><use href="#carSm" x="860" y="104" width="18" height="13"/>
+          <use href="#carSm" x="830" y="128" width="18" height="13"/><use href="#carSm" x="860" y="128" width="18" height="13"/>
+        </g>
+        <text x="490" y="204" font-family="Space Mono,monospace" font-size="12" fill="currentColor" opacity=".72">left in the pile, outlined and blinking</text>
+        <text x="490" y="240" font-family="Anton,sans-serif" font-size="30" fill="currentColor">
+          <tspan fill="var(--dividend)">13</tspan><tspan opacity=".4"> ÷ </tspan><tspan fill="var(--divisor)">3</tspan><tspan opacity=".4"> = </tspan><tspan fill="var(--quotient)">4</tspan><tspan fill="var(--remainder)"> r 1</tspan>
+        </text>
+      </svg>
+    </div>
+    <figcaption>Remainder entry: pick <b>4</b> on the strip, press <kbd>A</kbd>, a second strip appears, pick <b>1</b>, press <kbd>A</kbd>. Remainders are a late stage, but the pile never lies about them — a leftover shows from the first lesson if the numbers make one.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="kicker">Two rules about the pictures</div>
+  <h2>Countable<br>at a glance</h2>
+  <div class="notes">
+    <div>
+      <h3>Rows, never heaps</h3>
+      <p>Cars inside a circle lay out in rows. Six is two rows of three, not a heap of six. If a child has to count one by one, the picture has stopped teaching division and started teaching careful counting.</p>
+    </div>
+    <div>
+      <h3>Bundle above twenty</h3>
+      <p>Twenty loose objects is about the most anyone can read across a classroom. <span class="eq">60 ÷ 10</span> uses crates of ten, not sixty cars — which is also the honest on-ramp to place value, so it earns its place rather than being a compromise.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">Curriculum</div>
+  <h2>Stages</h2>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th></th><th>Facts</th><th>Why here</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td class="k">÷1 and n ÷ n<br>totals to 6</td><td>The two cases every child mis-states. One enormous circle; or every circle holding exactly one. The <span class="eq">3 ÷ 3</span> from the sketch lives here. Colours only, no words yet.</td></tr>
+        <tr><td class="n">2</td><td class="k">÷2, ÷5, ÷10<br>to 20</td><td>Halving and the easy tables. Two circles is visibly "half". The three words appear.</td></tr>
+        <tr><td class="n">3</td><td class="k">÷3, ÷4<br>within known tables</td><td>First real sharing — enough rounds that the rotation is felt.</td></tr>
+        <tr><td class="n">4</td><td class="k">any table fact<br>to 100 ÷ 10</td><td>Crates of ten appear. Place value arrives by the back door.</td></tr>
+        <tr><td class="n">5</td><td class="k">remainders</td><td>Only once a full group is a solid idea.</td></tr>
+        <tr><td class="n">6</td><td class="k">symbols only</td><td>Fluency. <kbd>X</kbd> peeks, at a price in points.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">Build</div>
+  <h2>What it takes</h2>
+  <div class="col">
+    <p>One HTML file, 2D canvas, flat high-contrast art, no build step, nothing from the network. Everything is sized for a projector at the back of a classroom rather than a desk.</p>
+    <p>The moving animation caps at about two and a half seconds however many cars there are — roughly 120 ms each up to a dozen, then it accelerates, and <kbd>R</kbd> skips the rest.</p>
+    <p>Gamepad input is polled per frame rather than evented. The game loop already runs so this costs nothing, but presses need edge detection — this frame's <code>pressed</code> against last frame's — rather than a keydown handler, and every repeatable action needs a repeat delay or one press moves three cars.</p>
+    <h3>Object sets</h3>
+    <p>Cars, apples, coins, ducks, socks, pizza slices — one set per round so the picture stays fresh, all drawn to the same silhouette size so circles stay comparable at a glance. Socks earn their place because a pair makes <span class="eq">÷2</span> obvious before anything has moved.</p>
+  </div>
+
+  <div class="pull">
+    First prototype: the move, one object set, sharing <em>and</em> grouping, rungs one to three, stage&nbsp;2 numbers, the controller layer with its two-press calibration, and the picker.
+  </div>
+</section>
+
+<div class="foot">Sharing Yard · concept · full notes in DESIGN.md</div>
+
+</div>
