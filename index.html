@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sharing Yard</title>
+<style>
+  html,body{height:100%;margin:0;background:#12150E;overflow:hidden}
+  canvas{display:block;width:100%;height:100%}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+"use strict";
+
+/* ============================================================
+   SHARING YARD
+   Division by moving cars into groups with a crane.
+   One screen, one Switch Pro controller, thirty students.
+   ============================================================ */
+
+const V = { w: 1600, h: 900 };
+const C = {
+  bg:        "#12150E",
+  ink:       "#F1F0E6",
+  dim:       "#8B9182",
+  faint:     "#2A2F22",
+  steel:     "#5E6B57",
+  dividend:  "#63BADB",
+  divisor:   "#E8B02A",
+  quotient:  "#79C68C",
+  remainder: "#E97050",
+  car:       "#F1F0E6"
+};
+const FONT = '"Trebuchet MS","Segoe UI",system-ui,sans-serif';
+
+const cv = document.getElementById("c");
+const ctx = cv.getContext("2d");
+let scale = 1, offx = 0, offy = 0;
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.floor(innerWidth * dpr);
+  cv.height = Math.floor(innerHeight * dpr);
+  scale = Math.min(cv.width / V.w, cv.height / V.h);
+  offx = (cv.width - V.w * scale) / 2;
+  offy = (cv.height - V.h * scale) / 2;
+}
+addEventListener("resize", resize);
+resize();
+
+/* ---------------- audio ---------------- */
+let ac = null;
+function audioOn() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } }
+function blip(freq, dur, type, vol) {
+  if (!ac) return;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || "square"; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.06, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+  o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
+}
+const SFX = {
+  grab:  () => blip(330, 0.07, "square", 0.05),
+  drop:  () => blip(200 + Math.random() * 30, 0.09, "square", 0.06),
+  deny:  () => blip(110, 0.16, "sawtooth", 0.05),
+  tick:  () => blip(520, 0.04, "square", 0.035),
+  good:  () => { blip(523, 0.12, "triangle", 0.09); setTimeout(() => blip(784, 0.24, "triangle", 0.09), 110); },
+  bad:   () => blip(150, 0.30, "sawtooth", 0.05),
+  spin:  () => blip(400 + Math.random() * 300, 0.03, "square", 0.03)
+};
+
+/* ---------------- input ----------------
+   Switch Pro pad, reported by Windows as an Xbox pad: the two
+   pairs of face buttons swap. The button PRINTED "A" (right)
+   arrives as buttons[1]. Binding confirm to buttons[0] would
+   bind the button printed B — cancel on every Nintendo console.
+   So the first run asks which button is which.
+----------------------------------------- */
+const DEFAULT_BIND = { A: 1, B: 0, X: 3, Y: 2 };
+let bind = (function () {
+  try {
+    const raw = localStorage.getItem("sharingyard.bind");
+    if (raw) { const b = JSON.parse(raw); if (typeof b.A === "number" && typeof b.B === "number") return b; }
+  } catch (e) {}
+  return null;
+})();
+function saveBind(b) { try { localStorage.setItem("sharingyard.bind", JSON.stringify(b)); } catch (e) {} }
+
+const IN = { A: 0, B: 0, X: 0, Y: 0, L: 0, R: 0, left: 0, right: 0, plus: 0 };
+const WAS = Object.assign({}, IN);
+const KEY = {};
+let padName = "", lastRawPress = -1, stick = 0;
+
+function pollPad() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let gp = null;
+  for (let i = 0; i < pads.length; i++) if (pads[i] && pads[i].connected) { gp = pads[i]; break; }
+  padName = gp ? gp.id : "";
+
+  for (const k in IN) WAS[k] = IN[k];
+  for (const k in IN) IN[k] = 0;
+  stick = 0;
+
+  if (gp) {
+    const b = gp.buttons, bd = bind || DEFAULT_BIND;
+    const down = i => i != null && b[i] && b[i].pressed;
+    lastRawPress = -1;
+    for (let i = 0; i < b.length; i++) if (b[i] && b[i].pressed) { lastRawPress = i; break; }
+    if (down(bd.A)) IN.A = 1;
+    if (down(bd.B)) IN.B = 1;
+    if (down(bd.X)) IN.X = 1;
+    if (down(bd.Y)) IN.Y = 1;
+    if (down(4) || down(6)) IN.L = 1;
+    if (down(5) || down(7)) IN.R = 1;
+    if (down(9)) IN.plus = 1;
+    if (down(14)) IN.left = 1;
+    if (down(15)) IN.right = 1;
+    const ax = gp.axes[0] || 0;
+    stick = Math.abs(ax) > 0.18 ? ax : 0;
+    if (ax < -0.55) IN.left = 1;
+    if (ax > 0.55) IN.right = 1;
+  } else {
+    lastRawPress = -1;
+  }
+
+  // keyboard fallback, always live
+  if (KEY.Enter || KEY[" "]) IN.A = 1;
+  if (KEY.Backspace) IN.B = 1;
+  if (KEY.p) IN.X = 1;
+  if (KEY.r) IN.Y = 1;
+  if (KEY.ArrowLeft) { IN.left = 1; stick = -1; }
+  if (KEY.ArrowRight) { IN.right = 1; stick = 1; }
+}
+const hit = k => IN[k] && !WAS[k];
+
+addEventListener("keydown", e => {
+  if ([" ", "Enter", "Backspace", "ArrowLeft", "ArrowRight"].includes(e.key)) e.preventDefault();
+  KEY[e.key.length === 1 ? e.key.toLowerCase() : e.key] = 1;
+  audioOn();
+});
+addEventListener("keyup", e => { KEY[e.key.length === 1 ? e.key.toLowerCase() : e.key] = 0; });
+addEventListener("pointerdown", audioOn);
+addEventListener("gamepadconnected", audioOn);
+
+let repT = 0;
+function heldDir(dt) {
+  const dir = IN.right ? 1 : (IN.left ? -1 : 0);
+  if (!dir) { repT = 0; return 0; }
+  if (hit("right") || hit("left")) { repT = 0.40; return dir; }
+  repT -= dt;
+  if (repT <= 0) { repT = 0.12; return dir; }
+  return 0;
+}
+
+/* ---------------- draw helpers ---------------- */
+function text(str, x, y, size, color, align, weight, spacing) {
+  ctx.font = (weight || "700") + " " + size + "px " + FONT;
+  ctx.fillStyle = color;
+  ctx.textBaseline = "middle";
+  if (spacing) {
+    let total = 0;
+    for (const ch of str) total += ctx.measureText(ch).width + spacing;
+    total -= spacing;
+    let cx = align === "center" ? x - total / 2 : (align === "right" ? x - total : x);
+    ctx.textAlign = "left";
+    for (const ch of str) { ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + spacing; }
+  } else {
+    ctx.textAlign = align || "center";
+    ctx.fillText(str, x, y);
+  }
+}
+function circleOutline(x, y, r, color, w, dash) {
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = w;
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function drawCar(x, y, w, color) {
+  const h = w * 0.36;
+  ctx.fillStyle = color;
+  const r = h * 0.34, bx = x - w / 2, by = y - h / 2;
+  ctx.beginPath();
+  ctx.moveTo(bx + r, by);
+  ctx.arcTo(bx + w, by, bx + w, by + h, r);
+  ctx.arcTo(bx + w, by + h, bx, by + h, r);
+  ctx.arcTo(bx, by + h, bx, by, r);
+  ctx.arcTo(bx, by, bx + w, by, r);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x - w * 0.24, y - h / 2);
+  ctx.lineTo(x - w * 0.12, y - h / 2 - w * 0.20);
+  ctx.lineTo(x + w * 0.10, y - h / 2 - w * 0.20);
+  ctx.lineTo(x + w * 0.22, y - h / 2);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - w * 0.26, y + h / 2, w * 0.115, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + w * 0.26, y + h / 2, w * 0.115, 0, Math.PI * 2); ctx.fill();
+}
+
+/* rows, never heaps */
+function gridSlots(n, cx, cy, r) {
+  if (n <= 0) return [];
+  const cols = Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const cw = (r * 1.42) / cols, ch = (r * 1.42) / rows;
+  const carW = Math.min(cw * 0.92, ch * 1.6);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const rIdx = Math.floor(i / cols);
+    const inRow = Math.min(cols, n - rIdx * cols);
+    const cIdx = i - rIdx * cols;
+    out.push({
+      x: cx + (cIdx - (inRow - 1) / 2) * cw,
+      y: cy + (rIdx - (rows - 1) / 2) * ch,
+      w: carW
+    });
+  }
+  return out;
+}
+
+/* ---------------- state ---------------- */
+const St = { BOOT: "boot", CAL_B: "calB", PICKER: "picker", MOVE: "move", ANSWER: "answer", RESULT: "result" };
+let state = St.BOOT;
+let t = 0;
+
+const scores = {};
+let student = 1, solved = 0;
+let reelPos = 0, reelVel = 0, reelSpinning = false, reelLanded = false, reelTick = 0;
+
+let Q = null, cars = [], orderCounter = 0;
+let answerOpts = [], answerSel = 0;
+let result = null, resultT = 0, countUp = -1, countT = 0;
+let fairNag = 0;
+
+/* car.g :  -1 in the pile   |   -2 in the claw   |   0..n circle index */
+const crane = { x: 800, carry: null, dip: -1, dipZone: null, resolved: false, bump: 0 };
+
+const PILE = { x: 195, y: 500, r: 122 };
+const BAND = { x0: 386, x1: 1256, y: 500 };
+const RAIL_Y = 232, CLAW_REST = 300;
+
+function newQuestion() {
+  const lvl = solved;
+  let a, b;
+  if (lvl < 3)      { a = 2 + (Math.random() * 2 | 0); b = 1 + (Math.random() * 3 | 0); }
+  else if (lvl < 8) { a = 2 + (Math.random() * 4 | 0); b = 2 + (Math.random() * 3 | 0); }
+  else              { a = 2 + (Math.random() * 5 | 0); b = 2 + (Math.random() * 4 | 0); }
+
+  const total = a * b;
+  const mode = (solved < 3 || Math.random() < 0.5) ? "share" : "group";
+
+  Q = mode === "share"
+    ? { total, mode, divisor: a, circles: a, perCircle: b, answer: b }
+    : { total, mode, divisor: b, circles: a, perCircle: b, answer: a };
+
+  cars = [];
+  for (let i = 0; i < total; i++) cars.push({ g: -1, o: 0, x: PILE.x, y: PILE.y, w: 40, seeded: false });
+  orderCounter = 0;
+  crane.carry = null; crane.dip = -1; crane.x = PILE.x;
+
+  const top = Math.max(8, Q.answer + 3);
+  answerOpts = [];
+  for (let i = 1; i <= top; i++) answerOpts.push(i);
+  answerSel = Math.max(0, Math.min(answerOpts.length - 1, Math.floor(top / 2) - 1));
+  result = null; countUp = -1; fairNag = 0;
+}
+
+const inCircle = i => cars.reduce((n, c) => n + (c.g === i ? 1 : 0), 0);
+const pileCount = () => cars.reduce((n, c) => n + (c.g === -1 ? 1 : 0), 0);
+
+function openCircles() {
+  if (Q.mode === "share") return Q.circles;
+  // every circle that already holds a car stays open...
+  let highest = 0;
+  for (const c of cars) if (c.g >= 0 && c.g + 1 > highest) highest = c.g + 1;
+  let open = Math.max(1, highest);
+  // ...and a fresh one opens once they are all full and cars are still out
+  const outside = cars.reduce((n, c) => n + (c.g < 0 ? 1 : 0), 0);
+  let allFull = true;
+  for (let i = 0; i < open; i++) if (inCircle(i) < Q.perCircle) { allFull = false; break; }
+  if (allFull && outside > 0 && open < Q.circles) open++;
+  return open;
+}
+
+function circleLayout() {
+  const n = Q ? openCircles() : 1;
+  const slot = (BAND.x1 - BAND.x0) / n;
+  const r = Math.min(120, slot / 2 - 16);
+  const out = [];
+  for (let i = 0; i < n; i++) out.push({ x: BAND.x0 + slot * (i + 0.5), y: BAND.y, r });
+  return out;
+}
+
+function zoneAt(x, lay) {
+  if (Math.abs(x - PILE.x) <= PILE.r + 8) return { type: "pile" };
+  for (let i = 0; i < lay.length; i++) if (Math.abs(x - lay[i].x) <= lay[i].r + 8) return { type: "circle", i };
+  return null;
+}
+
+function sharesEqual() {
+  const n = openCircles();
+  const first = inCircle(0);
+  if (first === 0) return false;
+  for (let i = 1; i < n; i++) if (inCircle(i) !== first) return false;
+  return true;
+}
+
+/* ---------------- update ---------------- */
+function update(dt) {
+  t += dt;
+  pollPad();
+  if (crane.bump > 0) crane.bump = Math.max(0, crane.bump - dt * 4);
+
+  if (state === St.BOOT) {
+    if (!bind) {
+      if (lastRawPress >= 0) { audioOn(); bind = { A: lastRawPress }; state = St.CAL_B; SFX.tick(); }
+      else if (KEY.Enter) { audioOn(); bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startPicker(); }
+    } else if (hit("A")) { audioOn(); startPicker(); }
+    else if (KEY.s && lastRawPress < 0 && KEY.Enter) { bind = null; }
+    return;
+  }
+
+  if (state === St.CAL_B) {
+    if (lastRawPress >= 0 && lastRawPress !== bind.A) {
+      bind.B = lastRawPress;
+      if (bind.A === 1) { bind.X = 3; bind.Y = 2; } else { bind.X = 2; bind.Y = 3; }
+      saveBind(bind); SFX.tick(); startPicker();
+    } else if (KEY.Enter) { bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startPicker(); }
+    return;
+  }
+
+  if (state === St.PICKER) {
+    if (reelSpinning) {
+      reelPos += reelVel * dt;
+      reelVel *= Math.pow(0.22, dt);
+      reelTick -= dt;
+      if (reelTick <= 0) { SFX.spin(); reelTick = 0.06; }
+      if (reelVel < 1.2) {
+        reelVel = 0; reelSpinning = false; reelLanded = true;
+        reelPos = Math.round(reelPos);
+        student = ((Math.round(reelPos) % 30) + 30) % 30 + 1;
+        SFX.good();
+      }
+    } else if (!reelLanded) {
+      if (hit("A")) { reelSpinning = true; reelVel = 32 + Math.random() * 24; SFX.tick(); }
+    } else {
+      if (hit("A")) { newQuestion(); state = St.MOVE; }
+      if (hit("Y")) reelLanded = false;
+    }
+    return;
+  }
+
+  if (state === St.MOVE) {
+    const lay = circleLayout();
+
+    // drive the crane
+    let dir = stick;
+    if (!dir) dir = IN.right ? 1 : (IN.left ? -1 : 0);
+    crane.x += dir * 780 * dt;
+    const minX = PILE.x, maxX = lay.length ? lay[lay.length - 1].x : BAND.x1;
+    crane.x = Math.max(minX, Math.min(maxX, crane.x));
+
+    // grab / drop
+    if (hit("A") && crane.dip < 0) {
+      const z = zoneAt(crane.x, lay);
+      if (z) { crane.dip = 0; crane.dipZone = z; crane.resolved = false; }
+      else SFX.deny();
+    }
+    if (crane.dip >= 0) {
+      crane.dip += dt / 0.30;
+      if (!crane.resolved && crane.dip >= 0.5) { crane.resolved = true; resolveDip(); }
+      if (crane.dip >= 1) crane.dip = -1;
+    }
+
+    if (hit("Y")) {                      // put everything back
+      cars.forEach(c => { c.g = -1; c.o = 0; });
+      crane.carry = null; orderCounter = 0; SFX.deny();
+    }
+
+    // done?
+    if (pileCount() === 0 && !crane.carry && crane.dip < 0) {
+      if (Q.mode === "group" || sharesEqual()) { state = St.ANSWER; SFX.tick(); }
+      else fairNag = Math.min(1, fairNag + dt * 3);
+    } else if (fairNag > 0) fairNag = Math.max(0, fairNag - dt * 3);
+    return;
+  }
+
+  if (state === St.ANSWER) {
+    const d = heldDir(dt);
+    if (d) { answerSel = Math.max(0, Math.min(answerOpts.length - 1, answerSel + d)); SFX.tick(); }
+    if (hit("B")) { state = St.MOVE; return; }
+    if (hit("A")) {
+      const picked = answerOpts[answerSel];
+      const ok = picked === Q.answer;
+      result = { ok, picked, correct: Q.answer };
+      resultT = 0;
+      if (ok) { solved++; scores[student] = (scores[student] || 0) + 10; SFX.good(); }
+      else { SFX.bad(); countUp = 0; countT = 0; }
+      state = St.RESULT;
+    }
+    return;
+  }
+
+  if (state === St.RESULT) {
+    resultT += dt;
+    if (!result.ok && countUp >= 0) {
+      countT += dt;
+      if (countT > 0.40) {
+        countT = 0;
+        const target = Q.mode === "share" ? inCircle(0) : openCircles();
+        if (countUp < target) { countUp++; SFX.tick(); }
+      }
+    }
+    if (resultT > 0.7 && hit("A")) startPicker();
+    if (resultT > 0.7 && hit("B") && !result.ok) { state = St.ANSWER; result = null; countUp = -1; }
+    return;
+  }
+}
+
+function resolveDip() {
+  const lay = circleLayout();
+  const z = crane.dipZone;
+  if (!z) return;
+
+  if (crane.carry) {
+    if (z.type === "pile") { crane.carry.g = -1; crane.carry.o = 0; crane.carry = null; SFX.drop(); return; }
+    if (Q.mode === "group" && inCircle(z.i) >= Q.perCircle) { SFX.deny(); crane.bump = 1; return; }
+    crane.carry.g = z.i; crane.carry.o = ++orderCounter; crane.carry = null; SFX.drop();
+    return;
+  }
+
+  // grab the car nearest the claw in this zone
+  const pool = cars.filter(c => z.type === "pile" ? c.g === -1 : c.g === z.i);
+  if (!pool.length) { SFX.deny(); return; }
+  let best = pool[0], bd = Infinity;
+  for (const c of pool) { const d = Math.abs(c.x - crane.x) + Math.abs(c.y - PILE.y) * 0.2; if (d < bd) { bd = d; best = c; } }
+  best.g = -2; best.o = 0;
+  crane.carry = best;
+  SFX.grab();
+}
+
+function startPicker() {
+  state = St.PICKER;
+  reelSpinning = false; reelLanded = false; reelPos = Math.random() * 30; reelVel = 0;
+}
+
+/* ---------------- draw ---------------- */
+function draw() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.setTransform(scale, 0, 0, scale, offx, offy);
+
+  if (state === St.BOOT) drawBoot();
+  else if (state === St.CAL_B) drawCalB();
+  else if (state === St.PICKER) drawPicker();
+  else drawGame();
+}
+
+function drawBoot() {
+  text("SHARING YARD", V.w / 2, 240, 104, C.ink, "center", "800", 6);
+  text("division you can watch happen", V.w / 2, 322, 28, C.dim, "center", "600", 3);
+
+  if (!bind) {
+    text("PRESS THE BUTTON MARKED", V.w / 2, 486, 28, C.dim, "center", "700", 4);
+    ctx.fillStyle = C.divisor;
+    ctx.beginPath(); ctx.arc(V.w / 2, 600, 70, 0, Math.PI * 2); ctx.fill();
+    text("A", V.w / 2, 604, 76, C.bg, "center", "800");
+    text("on your controller — the one on the right", V.w / 2, 718, 23, C.dim, "center", "600");
+    text("no controller?  press ENTER for keyboard", V.w / 2, 830, 20, C.dim, "center", "600");
+  } else {
+    text("PRESS   A   TO START", V.w / 2, 540, 44, C.divisor, "center", "800", 5);
+    text(padName ? "controller: " + padName.slice(0, 44) : "no controller found — arrows + Enter also work",
+         V.w / 2, 670, 20, C.dim, "center", "600");
+  }
+}
+
+function drawCalB() {
+  text("ONE MORE", V.w / 2, 260, 54, C.dim, "center", "800", 5);
+  text("PRESS THE BUTTON MARKED", V.w / 2, 430, 28, C.dim, "center", "700", 4);
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.arc(V.w / 2, 560, 70, 0, Math.PI * 2); ctx.stroke();
+  text("B", V.w / 2, 564, 76, C.ink, "center", "800");
+  text("this one puts a car back", V.w / 2, 690, 23, C.dim, "center", "600");
+}
+
+function drawPicker() {
+  text("WHO HAS THE CONTROLLER?", V.w / 2, 148, 32, C.dim, "center", "700", 8);
+  text("1 – 30", V.w / 2, 246, 21, C.dim, "center", "600", 4);
+
+  for (let d = -3; d <= 3; d++) {
+    const idx = Math.round(reelPos) + d;
+    const n = ((idx % 30) + 30) % 30 + 1;
+    const off = idx - reelPos;
+    const x = V.w / 2 + off * 200;
+    const fade = Math.max(0, 1 - Math.abs(off) / 3.2);
+    if (Math.abs(off) < 0.35 && !reelSpinning) text(String(n), x, 458, 186, C.divisor, "center", "800");
+    else text(String(n), x, 458, 108 * (0.55 + fade * 0.45), C.steel, "center", "800");
+  }
+  const g = ctx.createLinearGradient(0, 0, V.w, 0);
+  g.addColorStop(0, C.bg); g.addColorStop(0.24, "rgba(18,21,14,0)");
+  g.addColorStop(0.76, "rgba(18,21,14,0)"); g.addColorStop(1, C.bg);
+  ctx.fillStyle = g; ctx.fillRect(0, 320, V.w, 280);
+
+  if (!reelSpinning) {
+    ctx.strokeStyle = C.divisor; ctx.lineWidth = 6;
+    roundRect(V.w / 2 - 118, 352, 236, 214, 16); ctx.stroke();
+  }
+
+  if (!reelSpinning && !reelLanded) text("PRESS   A   TO SPIN", V.w / 2, 690, 38, C.divisor, "center", "800", 5);
+  else if (reelSpinning) text("• • •", V.w / 2, 690, 38, C.dim, "center", "800", 5);
+  else {
+    text("STUDENT " + student + "  —  PRESS  A  TO PLAY", V.w / 2, 690, 36, C.quotient, "center", "800", 3);
+    if (scores[student]) text(scores[student] + " points so far", V.w / 2, 752, 23, C.dim, "center", "600");
+    text("Y — spin again", V.w / 2, 820, 19, C.dim, "center", "600");
+  }
+}
+
+function drawCrane(lay) {
+  // rail
+  ctx.strokeStyle = C.steel; ctx.lineWidth = 7;
+  ctx.beginPath(); ctx.moveTo(PILE.x - 60, RAIL_Y); ctx.lineTo(BAND.x1 + 40, RAIL_Y); ctx.stroke();
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(PILE.x - 60, RAIL_Y - 22); ctx.lineTo(PILE.x - 60, RAIL_Y + 16); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(BAND.x1 + 40, RAIL_Y - 22); ctx.lineTo(BAND.x1 + 40, RAIL_Y + 16); ctx.stroke();
+
+  const z = zoneAt(crane.x, lay);
+  const deepY = z ? (z.type === "pile" ? PILE.y - 46 : lay[z.i].y - 46) : CLAW_REST;
+  const dipAmt = crane.dip >= 0 ? Math.sin(crane.dip * Math.PI) : 0;
+  const clawY = CLAW_REST + (deepY - CLAW_REST) * dipAmt + (crane.bump > 0 ? Math.sin(t * 40) * 6 * crane.bump : 0);
+
+  // trolley
+  ctx.fillStyle = C.steel;
+  roundRect(crane.x - 34, RAIL_Y - 16, 68, 30, 6); ctx.fill();
+  // cable
+  ctx.strokeStyle = C.steel; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(crane.x, RAIL_Y + 8); ctx.lineTo(crane.x, clawY - 22); ctx.stroke();
+
+  // claw prongs — open when empty, closed when carrying
+  const open = crane.carry ? 10 : 22;
+  ctx.strokeStyle = crane.carry ? C.divisor : C.ink;
+  ctx.lineWidth = 6; ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(crane.x - 24, clawY - 22); ctx.lineTo(crane.x, clawY - 6); ctx.lineTo(crane.x + 24, clawY - 22);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(crane.x - open, clawY - 8); ctx.lineTo(crane.x - open - 4, clawY + 16);
+  ctx.moveTo(crane.x + open, clawY - 8); ctx.lineTo(crane.x + open + 4, clawY + 16);
+  ctx.stroke();
+  ctx.lineCap = "butt";
+
+  if (crane.carry) { crane.carry.x = crane.x; crane.carry.y = clawY + 30; crane.carry.w = 62; }
+
+  // highlight the zone under the claw
+  if (z && state === St.MOVE) {
+    const hx = z.type === "pile" ? PILE.x : lay[z.i].x;
+    const hy = z.type === "pile" ? PILE.y : lay[z.i].y;
+    const hr = (z.type === "pile" ? PILE.r : lay[z.i].r) + 16;
+    ctx.save();
+    ctx.globalAlpha = 0.35 + 0.25 * Math.sin(t * 4);
+    circleOutline(hx, hy, hr, C.divisor, 4, [10, 10]);
+    ctx.restore();
+  }
+}
+
+function drawGame() {
+  const lay = circleLayout();
+
+  // targets
+  const pile = cars.filter(c => c.g === -1);
+  const pslots = gridSlots(pile.length, PILE.x, PILE.y, PILE.r);
+  pile.forEach((c, i) => ease(c, pslots[i]));
+  for (let g = 0; g < lay.length; g++) {
+    const inG = cars.filter(c => c.g === g).sort((a, b) => a.o - b.o);
+    const sl = gridSlots(inG.length, lay[g].x, lay[g].y, lay[g].r);
+    inG.forEach((c, i) => ease(c, sl[i]));
+  }
+
+  /* equation */
+  ctx.font = "800 100px " + FONT;
+  const sTotal = String(Q.total), sDiv = String(Q.divisor);
+  const wT = ctx.measureText(sTotal).width, wD = ctx.measureText(sDiv).width, wO = ctx.measureText(" ÷ ").width;
+  const ex = V.w / 2 - (wT + wO + wD) / 2 - 130;
+  text(sTotal, ex + wT / 2, 108, 100, C.dividend, "center", "800");
+  text("÷", ex + wT + wO / 2, 108, 80, C.dim, "center", "800");
+  text(sDiv, ex + wT + wO + wD / 2, 108, 100, C.divisor, "center", "800");
+  text("DIVIDEND", ex + wT / 2, 172, 19, C.dividend, "center", "700", 3);
+  text("DIVISOR", ex + wT + wO + wD / 2, 172, 19, C.divisor, "center", "700", 3);
+  text(Q.mode === "share" ? "how many circles" : "how many in each circle",
+       ex + wT + wO + wD / 2, 198, 17, C.dim, "center", "600");
+
+  /* pile */
+  const empty = pileCount() === 0;
+  circleOutline(PILE.x, PILE.y, PILE.r, C.dividend, empty ? 4 : 6, [14, 12]);
+  if (empty) text("empty", PILE.x, PILE.y, 24, C.dividend, "center", "600");
+  text("THE PILE", PILE.x, PILE.y + PILE.r + 42, 19, C.dividend, "center", "700", 3);
+
+  /* circles */
+  const settled = empty && !crane.carry;
+  for (let i = 0; i < lay.length; i++) {
+    const L = lay[i];
+    let col = Q.mode === "share" ? C.divisor : C.steel, w = 6;
+    if (Q.mode === "group" && inCircle(i) >= Q.perCircle) { col = C.quotient; w = 7; }
+    if (settled && state !== St.MOVE) { col = C.quotient; w = 8; }
+    if (settled && state === St.MOVE && fairNag > 0.2 && Q.mode === "share" && inCircle(i) !== inCircle(0)) col = C.remainder;
+    if (state === St.RESULT && !result.ok && i === 0) { col = C.remainder; w = 9; }
+    circleOutline(L.x, L.y, L.r, col, w);
+  }
+
+  /* cars */
+  for (const c of cars) if (c.g !== -2) drawCar(c.x, c.y, c.w || 40, C.car);
+
+  /* crane above everything except the carried car */
+  if (state === St.MOVE) drawCrane(lay);
+  if (crane.carry) drawCar(crane.carry.x, crane.carry.y, crane.carry.w, C.divisor);
+
+  /* counts, only when they are the point */
+  if (settled && state === St.MOVE && fairNag > 0.2 && Q.mode === "share") {
+    for (let i = 0; i < lay.length; i++) {
+      const n = inCircle(i);
+      text(String(n), lay[i].x, lay[i].y + lay[i].r + 34, 32,
+           n === inCircle(0) ? C.dim : C.remainder, "center", "800");
+    }
+    ctx.globalAlpha = fairNag;
+    text("every circle needs the same number", V.w / 2, 742, 30, C.remainder, "center", "700", 2);
+    ctx.globalAlpha = 1;
+  }
+
+  /* brace under the row */
+  if (lay.length && !(settled && state === St.MOVE && fairNag > 0.2)) {
+    const x0 = lay[0].x - lay[0].r, x1 = lay[lay.length - 1].x + lay[lay.length - 1].r;
+    const by = BAND.y + lay[0].r + 30;
+    ctx.strokeStyle = Q.mode === "share" ? C.divisor : C.quotient;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x0, by); ctx.lineTo(x0, by + 12); ctx.lineTo(x1, by + 12); ctx.lineTo(x1, by);
+    ctx.stroke();
+    text(lay.length + (lay.length === 1 ? " circle" : " circles"), (x0 + x1) / 2, by + 42, 22,
+         Q.mode === "share" ? C.divisor : C.quotient, "center", "700", 2);
+  }
+
+  /* answer */
+  const ax = 1442;
+  text("=", ax - 106, BAND.y, 80, C.dim, "center", "800");
+  const reveal = state === St.RESULT && (result.ok || resultT > 2.4);
+  if (reveal) {
+    text(String(Q.answer), ax, BAND.y, 160, C.quotient, "center", "800");
+    text("QUOTIENT", ax, BAND.y + 104, 19, C.quotient, "center", "700", 3);
+  } else if (state === St.ANSWER || state === St.RESULT) {
+    text(String(answerOpts[answerSel]), ax, BAND.y, 160, state === St.RESULT ? C.remainder : C.ink, "center", "800");
+    text("QUOTIENT", ax, BAND.y + 104, 19, C.dim, "center", "700", 3);
+  } else {
+    text("?", ax, BAND.y, 130, C.faint, "center", "800");
+  }
+
+  /* counting overlay after a wrong answer */
+  if (state === St.RESULT && !result.ok && countUp > 0) {
+    if (Q.mode === "share") {
+      const inG = cars.filter(c => c.g === 0).sort((a, b) => a.o - b.o);
+      for (let i = 0; i < Math.min(countUp, inG.length); i++) {
+        const c = inG[i];
+        ctx.fillStyle = C.remainder;
+        ctx.beginPath(); ctx.arc(c.x, c.y - c.w * 0.55, 15, 0, Math.PI * 2); ctx.fill();
+        text(String(i + 1), c.x, c.y - c.w * 0.55 + 1, 18, C.bg, "center", "800");
+      }
+    } else {
+      for (let i = 0; i < Math.min(countUp, lay.length); i++) {
+        ctx.fillStyle = C.remainder;
+        ctx.beginPath(); ctx.arc(lay[i].x, lay[i].y - lay[i].r - 26, 19, 0, Math.PI * 2); ctx.fill();
+        text(String(i + 1), lay[i].x, lay[i].y - lay[i].r - 25, 22, C.bg, "center", "800");
+      }
+    }
+  }
+
+  /* answer strip */
+  if (state === St.ANSWER || state === St.RESULT) {
+    const n = answerOpts.length, bw = 82, gap = 12;
+    const sx = V.w / 2 - (n * bw + (n - 1) * gap) / 2;
+    for (let i = 0; i < n; i++) {
+      const x = sx + i * (bw + gap), y = 764;
+      if (i === answerSel) {
+        ctx.fillStyle = state === St.RESULT ? (result.ok ? C.quotient : C.remainder) : C.ink;
+        roundRect(x - 4, y - 4, bw + 8, 74, 10); ctx.fill();
+        text(String(answerOpts[i]), x + bw / 2, y + 33, 42, C.bg, "center", "800");
+      } else {
+        ctx.strokeStyle = C.faint; ctx.lineWidth = 3;
+        roundRect(x, y, bw, 66, 8); ctx.stroke();
+        text(String(answerOpts[i]), x + bw / 2, y + 33, 34, C.dim, "center", "700");
+      }
+    }
+  }
+
+  /* prompts */
+  let hint = "";
+  if (state === St.MOVE) {
+    hint = crane.carry
+      ? "move the stick  ·  A — drop the car"
+      : "move the stick  ·  A — pick up a car" + (pileCount() === 0 ? "  ·  Y — start again" : "");
+  } else if (state === St.ANSWER) hint = "◀ ▶ pick the number  ·  A — that's my answer  ·  B — back to the cars";
+  else if (state === St.RESULT) hint = (result.ok || resultT > 2.4) ? "A — next student" : "";
+  if (hint) text(hint, V.w / 2, 866, 21, C.dim, "center", "600", 1);
+
+  /* first-move nudge */
+  if (state === St.MOVE && !crane.carry && cars.every(c => c.g === -1)) {
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 4);
+    text(Q.mode === "share" ? "share them out — one circle at a time" : "fill a circle, then the next one opens",
+         V.w / 2, 690, 27, C.divisor, "center", "700", 2);
+    ctx.globalAlpha = 1;
+  }
+
+  if (state === St.RESULT) {
+    if (result.ok) {
+      const pop = Math.min(1, resultT * 4);
+      ctx.globalAlpha = pop;
+      text("YES", V.w / 2, 690, 58 + pop * 6, C.quotient, "center", "800", 8);
+      ctx.globalAlpha = 1;
+    } else if (resultT > 2.4) {
+      text(Q.mode === "share" ? "count one circle again" : "count the circles again",
+           V.w / 2, 690, 30, C.remainder, "center", "700", 2);
+    }
+  }
+
+  /* badges */
+  text("STUDENT " + student, 40, 44, 21, C.dim, "left", "700", 3);
+  text((scores[student] || 0) + " PTS", V.w - 40, 44, 21, C.dim, "right", "700", 3);
+  text(Q.mode === "share" ? "SHARING" : "GROUPING", V.w / 2, 44, 21, C.dim, "center", "700", 5);
+}
+
+function ease(c, tg) {
+  if (!tg) return;
+  if (!c.seeded) { c.x = tg.x; c.y = tg.y; c.w = tg.w; c.seeded = true; return; }
+  c.x += (tg.x - c.x) * 0.22;
+  c.y += (tg.y - c.y) * 0.22;
+  c.w += (tg.w - c.w) * 0.22;
+}
+
+/* ---------------- loop ---------------- */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

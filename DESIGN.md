@@ -4,9 +4,9 @@ Working title. A division game for one classroom screen, one game controller,
 and thirty students. No reading required, no clock, one HTML file that runs
 offline on an old machine.
 
-The whole game is one sentence: **every division question is a picture of
-objects being moved into groups, one press at a time, and the child either
-watches that picture, drives it, or predicts it.**
+The whole game is one sentence: **every division question is a yard of cars the
+child shares out themselves, with a crane, until the answer is something they
+can see.**
 
 Its own thing — it does not need to look or sound like Times Table Dungeon.
 Some of the Dungeon's code is worth lifting (question generation, scoring, the
@@ -48,21 +48,37 @@ These notes assume the second, because it looks identical at `3 ÷ 3` and at
 `12 ÷ 3`, and because an empty pile is a clear finish line. Say the word and it
 flips back.
 
-## 2. The move
+## 2. The move — a crane the child drives
 
-One press of **A** moves one car. That is the core verb of the game.
+The child does not press a button and watch the game share the cars out. **They
+share the cars out themselves**, with a crane on a rail above the yard.
 
-1. The cars sit in the pile. The circles are empty.
-2. **A** — a car leaves the pile and drives into the first circle. Clack.
-3. **A** — the next goes to the second circle. **A** — the third.
-4. Round and round until the pile is empty. Every circle holds the same number.
+1. The **left stick** drives the crane left and right along the rail.
+2. Over the pile, **A** lowers the claw and picks up a car.
+3. Carry it to a circle. **A** lowers the claw and drops it in.
+4. Repeat until the pile is empty.
 5. The answer strip lights up. The child picks the number and confirms.
 
-**R** fast-forwards the rest for a child who has already seen enough.
+Cars can be picked back **out** of a circle the same way, so a child who has
+made a mess can fix it without starting over. **Y** puts everything back in the
+pile. There is no timer anywhere in the game — a child can push cars around for
+as long as they like and nothing on screen hurries them.
 
-There is no timer anywhere in the game. A child can sit on a question and move
-cars back and forth for as long as they want, and nothing on screen hurries
-them.
+### Why this matters more than it looks
+
+Because placement is free, **fair sharing becomes something you achieve, not
+something you watch**. In a sharing question the game will not accept an answer
+until every circle holds the same number: if the pile empties on an uneven
+split, the circles that differ turn red, their counts appear, and the child has
+to move cars between circles until it is fair. That moment — realising the
+shares must be level *before* there is an answer to give — is the lesson, and a
+button-press animation cannot produce it.
+
+In a grouping question the rule is the other one: a circle holds exactly the
+divisor and no more. Try to drop a fifth car into a circle of four and the claw
+refuses and the car stays in the grip. A new circle opens only when the open
+ones are full. So the child feels "a group is exactly this big" as a physical
+constraint rather than a caption.
 
 ## 3. The fork worth getting right
 
@@ -140,10 +156,15 @@ broken in a way nobody can describe.
 
 | Printed on the pad | Position | Browser reports it as | Bind to |
 | --- | --- | --- | --- |
-| **A** | right | `buttons[1]` (Xbox B) | **Move a car · confirm** |
-| **B** | bottom | `buttons[0]` (Xbox A) | Take a car back · go back |
+| **A** | right | `buttons[1]` (Xbox B) | **Pick up / drop a car · confirm** |
+| **B** | bottom | `buttons[0]` (Xbox A) | Back to the cars from the answer strip |
 | **X** | top | `buttons[3]` (Xbox Y) | Peek at the picture |
-| **Y** | left | `buttons[2]` (Xbox X) | Replay the move from the start |
+| **Y** | left | `buttons[2]` (Xbox X) | Put every car back in the pile |
+
+The **left stick** (`axes[0]`) drives the crane, with a 0.18 deadzone. The d-pad
+does the same thing for a child who finds the stick fiddly, and the same stick
+moves the selection along the answer strip once the cars are placed — so the
+whole game is one stick and one button.
 
 The trap: the obvious binding is `buttons[0]` for "confirm", because that is A on
 an Xbox pad. On this hardware `buttons[0]` is the button printed **B**, which is
@@ -154,11 +175,11 @@ Everything else maps by position and only needs relabelling:
 
 | Printed | Index | Does |
 | --- | --- | --- |
-| **L** / **R** | 4 / 5 | Fast-forward the moving |
+| **L** / **R** | 4 / 5 | unused |
 | **ZL** / **ZR** | 6 / 7 | unused |
 | **−** | 8 | unused |
 | **+** | 9 | Teacher menu |
-| **D-pad** ← → | 14 / 15 | Choose the number on the answer strip |
+| **D-pad** ← → | 14 / 15 | Drive the crane · choose the number |
 | **D-pad** ↑ ↓ | 12 / 13 | unused |
 | Left stick | axes 0/1 | Same as d-pad, deadzone 0.5 |
 
@@ -288,7 +309,14 @@ runs, so it costs nothing, but presses need edge detection (compare this frame's
 `pressed` against last frame's) rather than a keydown handler, and every
 repeatable action needs a repeat delay or one press moves three cars.
 
-## 15. First prototype
+## 15. What is built
 
-The move, one object set, sharing *and* grouping, rungs 1–3, stage 2 numbers,
-the controller layer with its two-press calibration, and the random picker.
+`index.html` is a playable prototype covering: the crane, sharing **and**
+grouping questions, the fair-share requirement, the grouping circle-capacity
+rule, the dividend/divisor/quotient colour coding, the random 1–30 picker, the
+answer strip, the two-press controller calibration with a keyboard fallback,
+and points per student. Difficulty steps up as answers are solved.
+
+Not built yet: the four-rung ladder (it currently plays as rung 2 throughout),
+remainders, crates of ten above twenty objects, object sets other than cars, the
+"name the part" vocabulary check, and the end-of-lesson summary of missed facts.

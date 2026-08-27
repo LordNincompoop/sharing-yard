@@ -171,9 +171,9 @@ td code,p code{font-family:var(--f-util);font-size:.85em;background:var(--panel)
 <header class="mast">
   <div class="eyebrow">Concept · division · one screen, one controller</div>
   <h1>Sharing<br>Yard</h1>
-  <p class="stand">Division as <span class="hl">a picture the child drives</span> — cars moved into groups, one press at a time, until the answer is something you can see.</p>
+  <p class="stand">Division as <span class="hl">a picture the child drives</span> — cars craned into groups, one at a time, until the answer is something you can see.</p>
   <div class="facts">
-    <span class="fact now">Status: concept</span>
+    <span class="fact now">Playable prototype</span>
     <span class="fact">30 students, 1 controller</span>
     <span class="fact">No reading required</span>
     <span class="fact">No clock</span>
@@ -247,11 +247,12 @@ td code,p code{font-family:var(--f-util);font-size:.85em;background:var(--panel)
 
 <section>
   <div class="kicker">The mechanic</div>
-  <h2>One press,<br>one car</h2>
+  <h2>A crane the<br>child drives</h2>
   <div class="col">
-    <p>Pressing <kbd>A</kbd> moves one car out of the pile and into a circle. That is the core verb of the whole game, and it is the only thing a child has to understand to start playing.</p>
-    <p>Round and round until the pile is empty and every circle holds the same number. <kbd>R</kbd> fast-forwards the rest for someone who has already seen enough, <kbd>B</kbd> takes a car back out.</p>
-    <p>There is no timer anywhere. A child can sit on a question and push cars back and forth for as long as they like, and nothing on screen hurries them.</p>
+    <p>The child does not press a button and watch the game share the cars out. <b>They share the cars out themselves.</b> The left stick drives a crane along a rail above the yard; <kbd>A</kbd> over the pile lowers the claw and picks up a car; <kbd>A</kbd> over a circle drops it in.</p>
+    <p>Cars come back <em>out</em> of a circle the same way, so a child who has made a mess can fix it without starting over. <kbd>Y</kbd> tips everything back into the pile. There is no timer anywhere — nothing on screen hurries them.</p>
+    <p>Because placement is free, <b>fair sharing becomes something you achieve rather than something you watch.</b> A sharing question will not accept an answer until every circle holds the same number: if the pile empties on an uneven split, the odd circles turn red, their counts appear, and cars have to be moved between circles until it is level. That moment — realising the shares must be equal <em>before</em> there is an answer to give — is the lesson, and no button-press animation produces it.</p>
+    <p>A grouping question enforces the opposite rule. A circle holds exactly the divisor and no more; try to drop a fifth car into a circle of four and the claw refuses and the car stays in the grip. A new circle opens only once the open ones are full, so "a group is exactly this big" arrives as a physical constraint rather than a caption.</p>
   </div>
 
   <figure>
@@ -460,13 +461,12 @@ td code,p code{font-family:var(--f-util);font-size:.85em;background:var(--panel)
         <!-- leaders left -->
         <g stroke="currentColor" stroke-opacity=".4" stroke-width="1.5" fill="none">
           <path d="M289 144 H238"/>
-          <path d="M309 68 V44 H238"/>
-          <path d="M414 139 V34 H238"/>
+          <path d="M414 139 V40 H238"/>
         </g>
         <g font-family="Space Mono,monospace" font-size="11.5" text-anchor="end" fill="currentColor">
-          <text x="232" y="148">◀ ▶ pick the number</text>
-          <text x="232" y="48">L / R — fast-forward</text>
-          <text x="232" y="38" opacity=".6">+ — teacher menu</text>
+          <text x="232" y="148" font-weight="700" fill="var(--accent)">stick — drive the crane</text>
+          <text x="232" y="164" fill="var(--accent)" opacity=".8">and pick the number</text>
+          <text x="232" y="44" opacity=".7">+ — teacher menu</text>
         </g>
 
         <!-- leaders right -->
@@ -479,11 +479,11 @@ td code,p code{font-family:var(--f-util);font-size:.85em;background:var(--panel)
           <path d="M432 144 H396 V246 H556"/>
         </g>
         <g font-family="Space Mono,monospace" font-size="11.5" fill="currentColor">
-          <text x="562" y="141" font-weight="700" fill="var(--accent)">A — move one car</text>
+          <text x="562" y="141" font-weight="700" fill="var(--accent)">A — pick up / drop a car</text>
           <text x="562" y="157" fill="var(--accent)" opacity=".8">and confirm the answer</text>
-          <text x="562" y="232">B — take one back</text>
+          <text x="562" y="232">B — back to the cars</text>
           <text x="562" y="56">X — peek at the picture</text>
-          <text x="562" y="250">Y — replay the move</text>
+          <text x="562" y="250">Y — tip them all back</text>
         </g>
       </svg>
     </div>
@@ -499,13 +499,13 @@ td code,p code{font-family:var(--f-util);font-size:.85em;background:var(--panel)
     <table>
       <thead><tr><th>Printed</th><th>Position</th><th>Browser reports</th><th>Bound to</th></tr></thead>
       <tbody>
-        <tr><td class="k"><b>A</b></td><td class="k">right</td><td class="k"><code>buttons[1]</code></td><td><b>Move a car · confirm</b></td></tr>
-        <tr><td class="k"><b>B</b></td><td class="k">bottom</td><td class="k"><code>buttons[0]</code></td><td>Take a car back · go back</td></tr>
+        <tr><td class="k"><b>A</b></td><td class="k">right</td><td class="k"><code>buttons[1]</code></td><td><b>Pick up / drop a car · confirm</b></td></tr>
+        <tr><td class="k"><b>B</b></td><td class="k">bottom</td><td class="k"><code>buttons[0]</code></td><td>Back to the cars from the strip</td></tr>
         <tr><td class="k"><b>X</b></td><td class="k">top</td><td class="k"><code>buttons[3]</code></td><td>Peek at the picture</td></tr>
-        <tr><td class="k"><b>Y</b></td><td class="k">left</td><td class="k"><code>buttons[2]</code></td><td>Replay the move</td></tr>
-        <tr><td class="k"><b>L / R</b></td><td class="k">shoulders</td><td class="k"><code>4</code> / <code>5</code></td><td>Fast-forward the moving</td></tr>
+        <tr><td class="k"><b>Y</b></td><td class="k">left</td><td class="k"><code>buttons[2]</code></td><td>Tip every car back into the pile</td></tr>
+        <tr><td class="k"><b>Left stick</b></td><td class="k">left</td><td class="k"><code>axes[0]</code></td><td>Drive the crane · choose the number</td></tr>
         <tr><td class="k"><b>+</b></td><td class="k">centre right</td><td class="k"><code>9</code></td><td>Teacher menu</td></tr>
-        <tr><td class="k"><b>D-pad ← →</b></td><td class="k">left</td><td class="k"><code>14</code> / <code>15</code></td><td>Choose the number</td></tr>
+        <tr><td class="k"><b>D-pad ← →</b></td><td class="k">left</td><td class="k"><code>14</code> / <code>15</code></td><td>Drive the crane · choose the number</td></tr>
       </tbody>
     </table>
   </div>
@@ -668,10 +668,10 @@ td code,p code{font-family:var(--f-util);font-size:.85em;background:var(--panel)
   </div>
 
   <div class="pull">
-    First prototype: the move, one object set, sharing <em>and</em> grouping, rungs one to three, stage&nbsp;2 numbers, the controller layer with its two-press calibration, and the picker.
+    Built so far: the crane, sharing <em>and</em> grouping, the fair-share requirement, the colour-coded parts, the random picker, the answer strip and the two-press calibration. Still to come: the four rungs, remainders, crates of ten, and object sets beyond cars.
   </div>
 </section>
 
-<div class="foot">Sharing Yard · concept · full notes in DESIGN.md</div>
+<div class="foot">Sharing Yard · playable prototype in index.html · full notes in DESIGN.md</div>
 
 </div>
