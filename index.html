@@ -352,6 +352,58 @@ function drawCar(x, y, w, color) {
   ctx.beginPath(); ctx.arc(x + w * 0.26, y + h / 2, w * 0.115, 0, Math.PI * 2); ctx.fill();
 }
 
+/* ---------------- controller glyphs ----------------
+   The pad is Nintendo-printed: X on top, Y on the left, A on the right,
+   B on the bottom. Children who cannot yet read a sentence can still match
+   a lit position on a diamond to the button under their thumb, so every
+   prompt draws the button rather than merely naming it. */
+const FACE_POS = { X: [0, -1], Y: [-1, 0], A: [1, 0], B: [0, 1] };
+
+function glyphFace(cx, cy, size, which) {
+  const R = size * 0.34, r = size * 0.21;
+  for (const k in FACE_POS) {
+    const p = FACE_POS[k];
+    const x = cx + p[0] * R, y = cy + p[1] * R;
+    if (k === which) {
+      ctx.fillStyle = C.divisor;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      text(k, x, y + size * 0.012, r * 1.35, C.bg, "center", "800");
+    } else {
+      ctx.strokeStyle = C.faint;
+      ctx.lineWidth = Math.max(1.5, size * 0.028);
+      ctx.beginPath(); ctx.arc(x, y, r * 0.82, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+}
+
+/* the small non-face buttons: minus, plus, shoulders */
+function glyphPill(cx, cy, size, label) {
+  const w = size * 0.62, h = size * 0.40;
+  ctx.strokeStyle = C.divisor;
+  ctx.lineWidth = Math.max(2, size * 0.035);
+  roundRect(cx - w / 2, cy - h / 2, w, h, h / 2);
+  ctx.stroke();
+  text(label, cx, cy + size * 0.012, h * 0.72, C.divisor, "center", "800");
+}
+
+/* a centred line of prose with buttons drawn into it */
+function hintLine(y, parts, size, color) {
+  const gs = size * 2.0;
+  ctx.font = "600 " + size + "px " + FONT;
+  let total = 0;
+  for (const p of parts) total += p.g || p.p ? gs * 0.78 : ctx.measureText(p.t).width;
+  let x = V.w / 2 - total / 2;
+  for (const p of parts) {
+    if (p.g) { glyphFace(x + gs * 0.39, y, gs, p.g); x += gs * 0.78; }
+    else if (p.p) { glyphPill(x + gs * 0.39, y, gs, p.p); x += gs * 0.78; }
+    else {
+      text(p.t, x, y, size, color || C.dim, "left", "600");
+      x += ctx.measureText(p.t).width;
+    }
+    ctx.font = "600 " + size + "px " + FONT;
+  }
+}
+
 /* rows, never heaps */
 function gridSlots(n, cx, cy, r) {
   if (n <= 0) return [];
@@ -860,11 +912,9 @@ function drawBoot() {
   text("division you can watch happen", V.w / 2, 322, 28, C.dim, "center", "600", 3);
 
   if (!bind) {
-    text("PRESS THE BUTTON MARKED", V.w / 2, 486, 28, C.dim, "center", "700", 4);
-    ctx.fillStyle = C.divisor;
-    ctx.beginPath(); ctx.arc(V.w / 2, 600, 70, 0, Math.PI * 2); ctx.fill();
-    text("A", V.w / 2, 604, 76, C.bg, "center", "800");
-    text("on your controller — the one on the right", V.w / 2, 706, 23, C.dim, "center", "600");
+    text("PRESS THIS BUTTON", V.w / 2, 470, 28, C.dim, "center", "700", 4);
+    glyphFace(V.w / 2, 588, 250, "A");
+    text("the one marked A, on the right", V.w / 2, 706, 23, C.dim, "center", "600");
     if (padName)
       text("nothing happening?  press ENTER to skip this and use the standard buttons",
            V.w / 2, 744, 19, C.divisor, "center", "600");
@@ -872,7 +922,7 @@ function drawBoot() {
     else if (!padName) drawWakeNote(760);
     else text("no controller?  press ENTER for keyboard", V.w / 2, 830, 20, C.dim, "center", "600");
   } else {
-    text("PRESS   A   TO START", V.w / 2, 528, 44, C.divisor, "center", "800", 5);
+    hintLine(534, [{ t: "PRESS " }, { g: "A" }, { t: " TO START" }], 40, C.divisor);
     if (padName) {
       text("controller: " + padName.slice(0, 44), V.w / 2, 606, 20, C.dim, "center", "600");
       text(padMapping + " mapping · " + (bind ? "this pad is set up" : "not set up yet"),
@@ -929,11 +979,9 @@ function drawWakeNote(y) {
 
 function drawCalB() {
   text("ONE MORE", V.w / 2, 260, 54, C.dim, "center", "800", 5);
-  text("PRESS THE BUTTON MARKED", V.w / 2, 430, 28, C.dim, "center", "700", 4);
-  ctx.strokeStyle = C.ink; ctx.lineWidth = 6;
-  ctx.beginPath(); ctx.arc(V.w / 2, 560, 70, 0, Math.PI * 2); ctx.stroke();
-  text("B", V.w / 2, 564, 76, C.ink, "center", "800");
-  text("this one puts a car back", V.w / 2, 690, 23, C.dim, "center", "600");
+  text("NOW THIS ONE", V.w / 2, 420, 28, C.dim, "center", "700", 4);
+  glyphFace(V.w / 2, 552, 250, "B");
+  text("the one marked B, underneath — it puts a car back", V.w / 2, 686, 23, C.dim, "center", "600");
 }
 
 function drawSetup() {
@@ -955,10 +1003,10 @@ function drawSetup() {
     }
   }
 
-  text("◀ ▶  choose   ·   A  start the lesson", V.w / 2, 610, 30, C.quotient, "center", "800", 3);
+  hintLine(612, [{ t: "stick ◀ ▶ choose      " }, { g: "A" }, { t: " start the lesson" }], 27, C.quotient);
   text("thirty students — " + (setupSel + 1) + " each is " + ((setupSel + 1) * 30) + " problems to get all the way round",
        V.w / 2, 690, 22, C.dim, "center", "600");
-  text("press  −  any time during the lesson to change this", V.w / 2, 826, 19, C.dim, "center", "600");
+  hintLine(828, [{ t: "press " }, { p: "−" }, { t: " any time during the lesson to change this" }], 19);
 }
 
 function drawPicker() {
@@ -984,15 +1032,15 @@ function drawPicker() {
     roundRect(V.w / 2 - 118, 352, 236, 214, 16); ctx.stroke();
   }
 
-  if (!reelSpinning && !reelLanded) text("PRESS   A   TO SPIN", V.w / 2, 690, 38, C.divisor, "center", "800", 5);
+  if (!reelSpinning && !reelLanded) hintLine(690, [{ t: "PRESS " }, { g: "A" }, { t: " TO SPIN" }], 34, C.divisor);
   else if (reelSpinning) text("• • •", V.w / 2, 690, 38, C.dim, "center", "800", 5);
   else {
-    text("STUDENT " + student + "  —  PRESS  A  TO PLAY", V.w / 2, 690, 36, C.quotient, "center", "800", 3);
+    hintLine(690, [{ t: "STUDENT " + student + "  —  PRESS " }, { g: "A" }, { t: " TO PLAY" }], 32, C.quotient);
     text(probsPerStudent === 1 ? "1 problem, then the crane moves on"
                                 : probsPerStudent + " problems, then the crane moves on",
          V.w / 2, 748, 23, C.dim, "center", "600");
     if (scores[student]) text(scores[student] + " points so far", V.w / 2, 786, 21, C.dim, "center", "600");
-    text("Y — spin again   ·   −  change how many problems each", V.w / 2, 826, 19, C.dim, "center", "600");
+    hintLine(828, [{ g: "Y" }, { t: " spin again      " }, { p: "−" }, { t: " change how many problems each" }], 19);
   }
 }
 
@@ -1233,16 +1281,18 @@ function drawGame() {
   }
 
   /* prompts */
-  let hint = "";
   if (state === St.MOVE) {
-    hint = crane.carry
-      ? "stick ←→ drive  ·  stick ↑↓ raise and lower  ·  A — drop the car"
-      : "stick ←→ drive  ·  stick ↑↓ raise and lower  ·  A — pick up a car" + (pileCount() === 0 ? "  ·  Y — start again" : "");
-  } else if (state === St.ANSWER) hint = "◀ ▶ pick the number  ·  A — that's my answer  ·  B — back to the cars";
-  else if (state === St.RESULT) hint = (result.ok || resultT > 2.4)
-    ? (probIdx + 1 >= probsPerStudent ? "A — next student" : "A — next problem")
-    : "";
-  if (hint) text(hint, V.w / 2, 866, 21, C.dim, "center", "600", 1);
+    const parts = [{ t: "stick ←→ drive     stick ↑↓ up and down     " }, { g: "A" },
+                   { t: crane.carry ? " drop the car" : " pick up a car" }];
+    if (!crane.carry && pileCount() === 0) { parts.push({ t: "     " }); parts.push({ g: "Y" }); parts.push({ t: " start again" }); }
+    hintLine(866, parts, 20);
+  } else if (state === St.ANSWER) {
+    hintLine(866, [{ t: "stick ◀ ▶ pick the number     " }, { g: "A" }, { t: " that's my answer     " },
+                   { g: "B" }, { t: " back to the cars" }], 20);
+  } else if (state === St.RESULT && (result.ok || resultT > 2.4)) {
+    hintLine(866, [{ g: "A" },
+                   { t: probIdx + 1 >= probsPerStudent ? " next student" : " next problem" }], 22);
+  }
 
   /* first-move nudge */
   if (state === St.MOVE && !crane.carry && cars.every(c => c.g === -1)) {

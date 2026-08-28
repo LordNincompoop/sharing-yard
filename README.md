@@ -75,6 +75,16 @@ once (two button presses) and remembered separately against that controller.
 Plug the cable in after a Bluetooth lesson and it will ask once more, then never
 again.
 
+### Button prompts show the button, not its name
+
+Every prompt draws a little four-button diamond with the one you need lit up —
+**X** top, **Y** left, **A** right, **B** bottom, matching the printing on a
+Nintendo-style pad such as the 8BitDo Ultimate. A child who cannot yet read
+"press A" can still match the lit corner to the button under their thumb.
+
+X-input mode swaps what the browser *reports* but not what is *printed*, so the
+lit corner and the button that works are always the same one.
+
 ### 8BitDo pads: use X-input mode
 
 An 8BitDo left in **Switch mode** will not work in any browser. In that mode the
