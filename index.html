@@ -165,14 +165,43 @@ addEventListener("pointerdown", noteGesture, true);
 addEventListener("keydown", noteGesture, true);
 addEventListener("touchstart", noteGesture, true);
 
+/* Windows can expose one physical controller through two paths at once - a
+   Switch Pro over Bluetooth often shows up as both a raw HID device and a
+   virtual XInput one. If we simply took the first connected slot each frame,
+   the chosen pad could alternate between two ids, and anything keyed to "the
+   id changed" would fire every single frame. That is what made a perfectly
+   working pad do nothing at all: the fresh-press tracker was reset on every
+   frame, so no press ever counted as new.
+
+   So: stick with the slot we are already using while it is still connected,
+   and only choose again when it goes away. */
+let activeIdx = -1;
+function pickPad(pads) {
+  let best = null, bestIdx = -1, keep = null, keepIdx = -1;
+  for (let i = 0; i < pads.length; i++) {
+    const p = pads[i];
+    if (!p || !p.connected) continue;
+    // stay with the controller we already chose, wherever it has moved to
+    if (padId && p.id === padId && !keep) { keep = p; keepIdx = i; }
+    if (!best) { best = p; bestIdx = i; continue; }
+    const betterMapping = p.mapping === "standard" && best.mapping !== "standard";
+    const sameMapping = p.mapping === best.mapping;
+    if (betterMapping || (sameMapping && p.buttons.length > best.buttons.length)) {
+      best = p; bestIdx = i;
+    }
+  }
+  if (keep) { activeIdx = keepIdx; return keep; }
+  activeIdx = bestIdx;
+  return best;
+}
+
 function pollPad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-  let gp = null;
-  for (let i = 0; i < pads.length; i++) if (pads[i] && pads[i].connected) { gp = pads[i]; break; }
+  const gp = pickPad(pads);
   padName = gp ? gp.id : "";
   if (gp) {
-    if (gp.id !== padId) {                 // a different pad, or the same one
-      padId = gp.id;                       // reconnected over another transport
+    if (gp.id !== padId) {                 // genuinely a different controller
+      padId = gp.id;
       bind = profiles[padId] || null;
       rawPrev = null;                      // seed on this frame, see below
     }
@@ -223,6 +252,7 @@ function pollPad() {
   } else {
     lastRawPress = -1;
     rawPrev = {};
+    activeIdx = -1;
   }
 
   // keyboard fallback, always live
@@ -530,8 +560,8 @@ function update(dt) {
 
   if (state === St.BOOT) {
     if (!bind) {
-      if (lastRawPress >= 0) { audioOn(); bind = { A: lastRawPress }; state = St.CAL_B; SFX.tick(); }
-      else if (KEY.Enter) { audioOn(); bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startSetup(); }
+      if (KEY.Enter) { audioOn(); bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startSetup(); }
+      else if (lastRawPress >= 0) { audioOn(); bind = { A: lastRawPress }; state = St.CAL_B; SFX.tick(); }
     } else if (hit("A")) {
       audioOn();
       if (KEY.s) {                       // hold S: forget this pad and set it up again
@@ -781,7 +811,8 @@ function drawDiag() {
     return;
   }
   L((padName || "?").slice(0, 46), 1, C.dim);
-  L("mapping: " + padMapping + "   buttons: " + padButtons + "   axes: " + padAxes, 2, C.dim);
+  L("mapping: " + padMapping + "   buttons: " + padButtons + "   axes: " + padAxes +
+    "   slot: " + activeIdx, 2, C.dim);
 
   const bd = bind || DEFAULT_BIND;
   L("bound  A=" + bd.A + "  B=" + bd.B + "  X=" + bd.X + "  Y=" + bd.Y +
@@ -802,7 +833,13 @@ function drawDiag() {
   L("dirs   " + (d.u ? "UP " : "-- ") + (d.d ? "DOWN " : "---- ") +
                 (d.l ? "LEFT " : "---- ") + (d.r ? "RIGHT" : "-----"), 7, C.divisor);
   L("stick  x " + (diagPad.axes[0] || 0).toFixed(2) + "   y " + (diagPad.axes[1] || 0).toFixed(2), 8, C.divisor);
-  L("hold S then press A to calibrate again", 10, C.dim);
+  const all = navigator.getGamepads ? navigator.getGamepads() : [];
+  let slots = [];
+  for (let i = 0; i < all.length; i++)
+    if (all[i]) slots.push(i + (all[i].connected ? "" : "!") + ":" + (all[i].mapping || "hid"));
+  L("slots seen: " + (slots.length ? slots.join("  ") : "none"), 9,
+    slots.length > 1 ? C.divisor : C.dim);
+  L("hold S then press A to set this pad up again", 10, C.dim);
 }
 
 function drawBoot() {
@@ -814,7 +851,10 @@ function drawBoot() {
     ctx.fillStyle = C.divisor;
     ctx.beginPath(); ctx.arc(V.w / 2, 600, 70, 0, Math.PI * 2); ctx.fill();
     text("A", V.w / 2, 604, 76, C.bg, "center", "800");
-    text("on your controller — the one on the right", V.w / 2, 718, 23, C.dim, "center", "600");
+    text("on your controller — the one on the right", V.w / 2, 706, 23, C.dim, "center", "600");
+    if (padName)
+      text("nothing happening?  press ENTER to skip this and use the standard buttons",
+           V.w / 2, 744, 19, C.divisor, "center", "600");
     if (!padName) drawWakeNote(770);
     else text("no controller?  press ENTER for keyboard", V.w / 2, 830, 20, C.dim, "center", "600");
   } else {
@@ -826,6 +866,9 @@ function drawBoot() {
     } else {
       drawWakeNote(628);
     }
+    if (padName && !bind)
+      text("if pressing A does nothing, press ENTER to use the standard buttons",
+           V.w / 2, 706, 18, C.divisor, "center", "600");
     text("press D any time to see what the controller is sending", V.w / 2, 838, 18, C.dim, "center", "600");
   }
 }
