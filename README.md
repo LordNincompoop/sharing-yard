@@ -75,48 +75,27 @@ once (two button presses) and remembered separately against that controller.
 Plug the cable in after a Bluetooth lesson and it will ask once more, then never
 again.
 
-### Button prompts show the button, not its name
+### Buttons: press A, get A
 
-Every prompt draws a little four-button diamond with the one you need lit up —
-**X** top, **Y** left, **A** right, **B** bottom, matching the printing on a
-Nintendo-style pad such as the 8BitDo Ultimate. A child who cannot yet read
-"press A" can still match the lit corner to the button under their thumb.
+The pad is Nintendo-printed — **X** top, **Y** left, **A** right, **B** bottom —
+and stays that way in X-input mode. The button marked **A** is the one that
+confirms, picks a car up and drops it. No setup, no calibration screen: plug in,
+press A.
 
-X-input mode swaps what the browser *reports* but not what is *printed*. Which
-index each button sends is settled by the calibration, and where each letter is
-drawn is a separate setting — so the two can always be made to agree.
+That works because an 8BitDo in X-input mode remaps by *label* — the button
+marked A is wired to the platform A — so the game binds by what the report says
+rather than by where the button sits. A pad read through Nintendo's own HID
+report keeps Nintendo order instead, and the game uses the matching default.
 
-**Check it on the title screen.** Hold any face button: the diamond lights up the
-one the game thinks you pressed.
+Every prompt **draws** the button rather than naming it: a four-button diamond
+with the one you need lit. A child who cannot yet read "press A" matches the lit
+corner to the button under their thumb.
 
-- Lights the **wrong letter**? The bindings are off — hold **S** and press **A**
-  to run the two-press setup again for that pad.
-- Right letter, **wrong corner**? Your pad prints its letters the other way
-  round — press **L** to flip between *A on the right* (Nintendo, 8BitDo
-  Ultimate) and *A at the bottom* (Xbox). It is remembered.
-
-### 8BitDo pads: use X-input mode
-
-An 8BitDo left in **Switch mode** will not work in any browser. In that mode the
-pad speaks Nintendo's proprietary HID protocol, which expects a handshake the
-browser never performs — Windows shows it as "Pro Controller" and it looks
-perfectly connected, but the page gets nothing usable out of it. This is a
-setting on the controller, not a fault in the game.
-
-Put it in **X-input mode**:
-
-- **Pro 2 / Ultimate and similar:** slide the switch on the back to **X**.
-- **No switch:** turn the pad off, then hold **START + X** until it powers on.
-
-Then pair it again. The game detects Switch mode and puts these instructions on
-the title screen.
-
-Press **D** at any time for a diagnostics overlay showing exactly what the pad is
-reporting: its name, its mapping, which buttons are down, and live stick values.
-That is the thing to look at if a controller behaves oddly.
-
-Hold **S** and press **A** on the title screen to set a controller up again from
-scratch.
+- Letters in the wrong corners for your pad? Press **L** to flip between *A on
+  the right* (Nintendo, 8BitDo Ultimate) and *A at the bottom* (Xbox). Remembered.
+- Buttons doing the wrong thing? Hold **S** and press any button to set them by
+  hand, two presses. Remembered per controller.
+- **D** shows what the pad is reporting.
 
 ## What makes it more than an animation
 

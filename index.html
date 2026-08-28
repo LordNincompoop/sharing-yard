@@ -81,27 +81,37 @@ const SFX = {
    bind the button printed B — cancel on every Nintendo console.
    So the first run asks which button is which.
 ----------------------------------------- */
-/* Works for BOTH the mappings a Switch Pro Controller turns up with:
-     - USB / Chrome "standard" mapping .. 0 bottom, 1 right, 2 left, 3 top
-     - Bluetooth / Nintendo HID order ... 0 B, 1 A, 2 Y, 3 X
-   In both, the button PRINTED "A" lands on index 1, so this default is
-   right either way. The calibration below still runs, because everything
-   else about a Bluetooth report can move. */
-const DEFAULT_BIND = { A: 1, B: 0, X: 3, Y: 2 };
+/* Which index does the button PRINTED "A" actually send?
+
+   An 8BitDo in X-input mode remaps by LABEL: the button marked A is wired to
+   the platform's A, so it arrives as index 0 even though it sits on the right
+   where Nintendo prints it. That is the point of X-input mode - "press A"
+   prompts work with the button marked A. Every Xbox-style pad does the same.
+
+   A pad read through Nintendo's own HID report keeps Nintendo's order instead,
+   where A is index 1.
+
+   So the default follows the report, not the printing. Press A, get A. */
+const BIND_XINPUT   = { A: 0, B: 1, X: 2, Y: 3 };   // standard / X-input pads
+const BIND_NINTENDO = { A: 1, B: 0, X: 3, Y: 2 };   // raw Nintendo HID
+function defaultBindFor(mapping) {
+  return Object.assign({}, mapping === "standard" ? BIND_XINPUT : BIND_NINTENDO);
+}
+const DEFAULT_BIND = BIND_XINPUT;
 
 /* One remembered profile per controller, keyed by the id the browser
    reports. The same pad on USB and on Bluetooth reports two different
    ids, so each gets calibrated once and then remembered separately. */
 let profiles = (function () {
   try {
-    const raw = localStorage.getItem("sharingyard.pads");
+    const raw = localStorage.getItem("sharingyard.pads2");
     if (raw) { const p = JSON.parse(raw); if (p && typeof p === "object") return p; }
   } catch (e) {}
   return {};
 })();
 let bind = null, padId = "", padMapping = "", padAxes = 0, padButtons = 0;
 function persistProfiles() {
-  try { localStorage.setItem("sharingyard.pads", JSON.stringify(profiles)); } catch (e) {}
+  try { localStorage.setItem("sharingyard.pads2", JSON.stringify(profiles)); } catch (e) {}
 }
 function saveBind(b) { profiles[padId] = b; persistProfiles(); }
 
@@ -212,7 +222,8 @@ function pollPad() {
   if (gp) {
     if (gp.id !== padId) {                 // genuinely a different controller
       padId = gp.id;
-      bind = profiles[padId] || null;
+      // a saved setup wins; otherwise the right default for this kind of report
+      bind = profiles[padId] || defaultBindFor(gp.mapping || "");
       rawPrev = null;                      // seed on this frame, see below
     }
     padMapping = gp.mapping || "non-standard";
@@ -463,7 +474,7 @@ function gridSlots(n, cx, cy, r) {
 }
 
 /* ---------------- state ---------------- */
-const St = { BOOT: "boot", CAL_B: "calB", SETUP: "setup", PICKER: "picker", MOVE: "move", ANSWER: "answer", RESULT: "result" };
+const St = { BOOT: "boot", CAL_A: "calA", CAL_B: "calB", SETUP: "setup", PICKER: "picker", MOVE: "move", ANSWER: "answer", RESULT: "result" };
 let state = St.BOOT;
 let t = 0;
 
@@ -667,21 +678,24 @@ function update(dt) {
   }
 
   if (state === St.BOOT) {
-    if (!bind) {
-      if (KEY.Enter) { audioOn(); bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startSetup(); }
-      else if (lastRawPress >= 0) { audioOn(); bind = { A: lastRawPress }; state = St.CAL_B; SFX.tick(); }
-    } else if (hit("A")) {
+    // hold S and press a button to teach the game this pad by hand
+    if (KEY.s && lastRawPress >= 0) {
       audioOn();
-      if (KEY.s) {                       // hold S: forget this pad and set it up again
-        delete profiles[padId];
-        persistProfiles();
-        bind = null;                     // the next press becomes the new "A"
-        SFX.tick();
-        return;
-      }
+      delete profiles[padId]; persistProfiles();
+      bind = null; state = St.CAL_A; SFX.tick();
+      return;
+    }
+    if (hit("A") || KEY.Enter) {
+      audioOn();
+      if (!bind) bind = Object.assign({}, DEFAULT_BIND);
       startSetup();
     }
-    else if (KEY.s && lastRawPress < 0 && KEY.Enter) { bind = null; }
+    return;
+  }
+
+  if (state === St.CAL_A) {
+    if (lastRawPress >= 0) { audioOn(); bind = { A: lastRawPress }; state = St.CAL_B; SFX.tick(); }
+    else if (KEY.Enter) { bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startSetup(); }
     return;
   }
 
@@ -882,6 +896,7 @@ function draw() {
     offy + (sh ? (Math.random() - 0.5) * sh * scale : 0));
 
   if (state === St.BOOT) drawBoot();
+  else if (state === St.CAL_A) drawCalA();
   else if (state === St.CAL_B) drawCalB();
   else if (state === St.SETUP) drawSetup();
   else if (state === St.PICKER) drawPicker();
@@ -955,33 +970,29 @@ function drawDiag() {
 }
 
 function drawBoot() {
-  text("SHARING YARD", V.w / 2, 240, 104, C.ink, "center", "800", 6);
-  text("division you can watch happen", V.w / 2, 322, 28, C.dim, "center", "600", 3);
+  text("SHARING YARD", V.w / 2, 206, 100, C.ink, "center", "800", 6);
+  text("division you can watch happen", V.w / 2, 286, 27, C.dim, "center", "600", 3);
 
-  if (!bind) {
-    text("PRESS THIS BUTTON", V.w / 2, 470, 28, C.dim, "center", "700", 4);
-    glyphFace(V.w / 2, 588, 250, "A");
-    text("the one marked A, on the right", V.w / 2, 706, 23, C.dim, "center", "600");
-    if (padName)
-      text("nothing happening?  press ENTER to skip this and use the standard buttons",
-           V.w / 2, 744, 19, C.divisor, "center", "600");
-    if (looksLikeSwitchMode()) drawModeHelp(690);
-    else if (!padName) drawWakeNote(760);
-    else text("no controller?  press ENTER for keyboard", V.w / 2, 830, 20, C.dim, "center", "600");
-  } else {
-    hintLine(534, [{ t: "PRESS " }, { g: "A" }, { t: " TO START" }], 40, C.divisor);
-    if (padName) {
-      text("controller: " + padName.slice(0, 44), V.w / 2, 606, 20, C.dim, "center", "600");
-      text(padMapping + " mapping · " + (bind ? "this pad is set up" : "not set up yet"),
-           V.w / 2, 634, 18, bind ? C.quotient : C.divisor, "center", "600");
-      if (looksLikeSwitchMode()) drawModeHelp(656);
-      else drawTester(654);
-    } else {
-      drawWakeNote(600);
-      drawModeHelp(694);
-    }
-    text("press D any time to see what the controller is sending", V.w / 2, 838, 18, C.dim, "center", "600");
+  if (!padName) {
+    drawWakeNote(352);
+    drawModeHelp(478);
+    text("or press ENTER to play with the arrow keys", V.w / 2, 722, 20, C.dim, "center", "600");
+    return;
   }
+
+  hintLine(392, [{ t: "PRESS " }, { g: "A" }, { t: " TO START" }], 40, C.divisor);
+
+  if (looksLikeSwitchMode()) { drawModeHelp(460); return; }
+
+  glyphFace(V.w / 2, 592, 168, "A");
+  text(glyphLayout === "nintendo"
+         ? "A is the button on the RIGHT \u2014 the one marked A on your pad"
+         : "A is the button at the BOTTOM",
+       V.w / 2, 704, 21, C.dim, "center", "600");
+  text("letters in the wrong corners?  press L", V.w / 2, 736, 18, C.dim, "center", "600");
+  text("controller: " + padName.slice(0, 44), V.w / 2, 788, 17, C.dim, "center", "600");
+  text("hold S and press a button to set them by hand   \u00b7   D for details",
+       V.w / 2, 816, 17, C.dim, "center", "600");
 }
 
 /* Does the picture agree with the pad? Hold a button and find out. */
@@ -1043,6 +1054,13 @@ function drawWakeNote(y) {
     text("no controller found", V.w / 2, y + 26, 22, C.dim, "center", "700", 2);
     text("turn it on and press a button · or play with the arrow keys and Enter", V.w / 2, y + 54, 18, C.dim, "center", "600");
   }
+}
+
+function drawCalA() {
+  text("PRESS THIS BUTTON", V.w / 2, 300, 30, C.dim, "center", "700", 4);
+  glyphFace(V.w / 2, 470, 250, "A");
+  text("whichever button your pad calls A", V.w / 2, 632, 23, C.dim, "center", "600");
+  text("ENTER to go back to the normal buttons", V.w / 2, 700, 19, C.dim, "center", "600");
 }
 
 function drawCalB() {
