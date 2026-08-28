@@ -159,6 +159,16 @@ let rawPrev = {};
    into. Pressing buttons on the pad does not count. Until that happens
    navigator.getGamepads() hands back nothing, which looks exactly like a dead
    controller - so the title screen says what to do about it. */
+/* An 8BitDo (or any pad) left in SWITCH mode speaks Nintendo's proprietary
+   HID protocol, which expects a handshake browsers never perform. Windows
+   shows it as "Pro Controller" and everything looks connected, but the page
+   gets nothing usable - or nothing at all. X-input mode fixes it outright. */
+function looksLikeSwitchMode() {
+  if (!padName) return false;
+  if (padMapping === "standard") return false;
+  return /pro controller|8bitdo|057e|switch/i.test(padName);
+}
+
 let gestured = false;
 function noteGesture() { gestured = true; audioOn(); }
 addEventListener("pointerdown", noteGesture, true);
@@ -839,7 +849,10 @@ function drawDiag() {
     if (all[i]) slots.push(i + (all[i].connected ? "" : "!") + ":" + (all[i].mapping || "hid"));
   L("slots seen: " + (slots.length ? slots.join("  ") : "none"), 9,
     slots.length > 1 ? C.divisor : C.dim);
-  L("hold S then press A to set this pad up again", 10, C.dim);
+  if (looksLikeSwitchMode())
+    L("SWITCH MODE — set the pad to X-input (back switch, or START+X)", 10, C.divisor);
+  else
+    L("hold S then press A to set this pad up again", 10, C.dim);
 }
 
 function drawBoot() {
@@ -855,22 +868,43 @@ function drawBoot() {
     if (padName)
       text("nothing happening?  press ENTER to skip this and use the standard buttons",
            V.w / 2, 744, 19, C.divisor, "center", "600");
-    if (!padName) drawWakeNote(770);
+    if (looksLikeSwitchMode()) drawModeHelp(690);
+    else if (!padName) drawWakeNote(760);
     else text("no controller?  press ENTER for keyboard", V.w / 2, 830, 20, C.dim, "center", "600");
   } else {
     text("PRESS   A   TO START", V.w / 2, 528, 44, C.divisor, "center", "800", 5);
     if (padName) {
-      text("controller: " + padName.slice(0, 44), V.w / 2, 640, 20, C.dim, "center", "600");
-      text(padMapping + " mapping · " + (bind ? "this pad is set up" : "not set up yet — hold S then press A"),
-           V.w / 2, 670, 18, bind ? C.quotient : C.divisor, "center", "600");
+      text("controller: " + padName.slice(0, 44), V.w / 2, 606, 20, C.dim, "center", "600");
+      text(padMapping + " mapping · " + (bind ? "this pad is set up" : "not set up yet"),
+           V.w / 2, 634, 18, bind ? C.quotient : C.divisor, "center", "600");
+      if (looksLikeSwitchMode()) drawModeHelp(656);
+      else if (!bind)
+        text("if pressing A does nothing, press ENTER to use the standard buttons",
+             V.w / 2, 668, 18, C.divisor, "center", "600");
     } else {
-      drawWakeNote(628);
+      drawWakeNote(600);
+      drawModeHelp(694);
     }
-    if (padName && !bind)
-      text("if pressing A does nothing, press ENTER to use the standard buttons",
-           V.w / 2, 706, 18, C.divisor, "center", "600");
     text("press D any time to see what the controller is sending", V.w / 2, 838, 18, C.dim, "center", "600");
   }
+}
+
+/* The fix that is on the controller rather than in the code. */
+function drawModeHelp(y) {
+  ctx.save();
+  ctx.globalAlpha = 0.96;
+  ctx.fillStyle = "#2A1F05";
+  roundRect(V.w / 2 - 470, y, 940, 188, 10); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = C.divisor; ctx.lineWidth = 3;
+  roundRect(V.w / 2 - 470, y, 940, 188, 10); ctx.stroke();
+  ctx.restore();
+
+  text("8BITDO PAD?  PUT IT IN X-INPUT MODE", V.w / 2, y + 34, 27, C.divisor, "center", "800", 3);
+  text("In Switch mode browsers cannot read it — this is a controller setting,", V.w / 2, y + 70, 19, C.ink, "center", "600");
+  text("not a fault with the game.", V.w / 2, y + 94, 19, C.ink, "center", "600");
+  text("Switch on the back:  slide it to  X", V.w / 2, y + 128, 20, C.quotient, "center", "700", 1);
+  text("No switch:  turn the pad off, then hold  START + X  until it powers on", V.w / 2, y + 156, 20, C.quotient, "center", "700", 1);
 }
 
 /* The single most common "my controller does nothing" cause, said plainly. */

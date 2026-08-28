@@ -75,6 +75,22 @@ once (two button presses) and remembered separately against that controller.
 Plug the cable in after a Bluetooth lesson and it will ask once more, then never
 again.
 
+### 8BitDo pads: use X-input mode
+
+An 8BitDo left in **Switch mode** will not work in any browser. In that mode the
+pad speaks Nintendo's proprietary HID protocol, which expects a handshake the
+browser never performs — Windows shows it as "Pro Controller" and it looks
+perfectly connected, but the page gets nothing usable out of it. This is a
+setting on the controller, not a fault in the game.
+
+Put it in **X-input mode**:
+
+- **Pro 2 / Ultimate and similar:** slide the switch on the back to **X**.
+- **No switch:** turn the pad off, then hold **START + X** until it powers on.
+
+Then pair it again. The game detects Switch mode and puts these instructions on
+the title screen.
+
 Press **D** at any time for a diagnostics overlay showing exactly what the pad is
 reporting: its name, its mapping, which buttons are down, and live stick values.
 That is the thing to look at if a controller behaves oddly.
