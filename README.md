@@ -82,8 +82,18 @@ Every prompt draws a little four-button diamond with the one you need lit up —
 Nintendo-style pad such as the 8BitDo Ultimate. A child who cannot yet read
 "press A" can still match the lit corner to the button under their thumb.
 
-X-input mode swaps what the browser *reports* but not what is *printed*, so the
-lit corner and the button that works are always the same one.
+X-input mode swaps what the browser *reports* but not what is *printed*. Which
+index each button sends is settled by the calibration, and where each letter is
+drawn is a separate setting — so the two can always be made to agree.
+
+**Check it on the title screen.** Hold any face button: the diamond lights up the
+one the game thinks you pressed.
+
+- Lights the **wrong letter**? The bindings are off — hold **S** and press **A**
+  to run the two-press setup again for that pad.
+- Right letter, **wrong corner**? Your pad prints its letters the other way
+  round — press **L** to flip between *A on the right* (Nintendo, 8BitDo
+  Ultimate) and *A at the bottom* (Xbox). It is remembered.
 
 ### 8BitDo pads: use X-input mode
 
