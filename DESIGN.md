@@ -223,13 +223,53 @@ Everything else maps by position and only needs relabelling:
 with the d-pad. Answers are small — 0 to 12 — so a strip beats a keypad, and it
 removes the whole class of "pressed 4 then 2, meant 4" errors.
 
-### Calibration, because Bluetooth lies
+### Bluetooth reports a different controller entirely
 
-A Switch Pro pad reports the standard Xbox mapping over USB in Chrome, but over
-Bluetooth, or through a third-party adapter, the indices move around. Rather
-than guess, the first run shows one screen: **"press the button that says A"**,
-then **"press the button that says B"**. Store the result in `localStorage` and
-never ask again. Two presses, and the hardware question is closed permanently.
+Over USB, Chrome hands the pad over with the `standard` mapping. Over
+**Bluetooth the same physical controller arrives as a different device**: a
+different `id`, `mapping` empty rather than `"standard"`, eighteen buttons
+instead of sixteen, ten axes instead of four, and Nintendo's own HID ordering.
+
+One piece of luck holds it together. Both orders put the button printed **A**
+at index 1:
+
+| | index 0 | index 1 | index 2 | index 3 |
+| --- | --- | --- | --- | --- |
+| standard (USB) | bottom = **B** | right = **A** | left = **Y** | top = **X** |
+| Nintendo HID (Bluetooth) | **B** | **A** | **Y** | **X** |
+
+So the face buttons need no special case. Three other things do:
+
+- **The d-pad moves.** Standard puts it on buttons 12–15. The HID report puts
+  it on 14–17, or packs it into a *hat* on `axes[9]` — eight positions spread
+  across −1..1, resting somewhere above 1. All three are read.
+- **A hat reader must be strict.** Eight positions across −1..1 means a stick
+  axis resting at exactly `0.00` sits half a step from "down". Read it loosely
+  and the crane drives itself across the yard with nobody touching the pad. So
+  only `axes[9]` of a ten-axis report is treated as a hat, and the value has to
+  land within 0.22 of a real position.
+- **The left stick is the safety net.** It is `axes[0]`/`axes[1]` on every
+  report, and in this game the stick alone can drive the crane, work the hoist
+  and pick the answer. A d-pad shape nobody anticipated therefore costs nothing.
+
+### One remembered profile per controller
+
+Calibration — **"press the button that says A"**, then **"press the button that
+says B"** — is stored against the `id` the browser reports, not globally. The
+same pad on USB and on Bluetooth has two different ids, so each gets set up once
+and is remembered separately; plugging the cable in after a Bluetooth lesson
+asks for two presses and then never again.
+
+Hold **S** and press **A** on the title screen to forget the current pad and set
+it up again.
+
+### Seeing what the pad is actually sending
+
+Press **D** at any time for an overlay: the controller's id, its mapping,
+button and axis counts, which button indices are down right now, live axis
+values, what the direction reader makes of them, and whether this pad is
+calibrated or running on the default. It is the thing to read out when a
+controller misbehaves in a classroom and nobody can see the code.
 
 Also needed, because a controller is the only input: a "no pad found — press any
 button" screen that polls until one appears, handling for a pad going to sleep

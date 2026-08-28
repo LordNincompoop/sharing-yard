@@ -81,26 +81,93 @@ const SFX = {
    bind the button printed B — cancel on every Nintendo console.
    So the first run asks which button is which.
 ----------------------------------------- */
+/* Works for BOTH the mappings a Switch Pro Controller turns up with:
+     - USB / Chrome "standard" mapping .. 0 bottom, 1 right, 2 left, 3 top
+     - Bluetooth / Nintendo HID order ... 0 B, 1 A, 2 Y, 3 X
+   In both, the button PRINTED "A" lands on index 1, so this default is
+   right either way. The calibration below still runs, because everything
+   else about a Bluetooth report can move. */
 const DEFAULT_BIND = { A: 1, B: 0, X: 3, Y: 2 };
-let bind = (function () {
+
+/* One remembered profile per controller, keyed by the id the browser
+   reports. The same pad on USB and on Bluetooth reports two different
+   ids, so each gets calibrated once and then remembered separately. */
+let profiles = (function () {
   try {
-    const raw = localStorage.getItem("sharingyard.bind");
-    if (raw) { const b = JSON.parse(raw); if (typeof b.A === "number" && typeof b.B === "number") return b; }
+    const raw = localStorage.getItem("sharingyard.pads");
+    if (raw) { const p = JSON.parse(raw); if (p && typeof p === "object") return p; }
   } catch (e) {}
-  return null;
+  return {};
 })();
-function saveBind(b) { try { localStorage.setItem("sharingyard.bind", JSON.stringify(b)); } catch (e) {} }
+let bind = null, padId = "", padMapping = "", padAxes = 0, padButtons = 0;
+function persistProfiles() {
+  try { localStorage.setItem("sharingyard.pads", JSON.stringify(profiles)); } catch (e) {}
+}
+function saveBind(b) { profiles[padId] = b; persistProfiles(); }
+
+/* Direction reading has to cope with three shapes of report: the standard
+   mapping's d-pad buttons, Nintendo's HID d-pad buttons, and a hat packed
+   into a spare axis. The left stick is read regardless, and on this game
+   the stick alone can do everything - so a d-pad we fail to recognise
+   costs nothing. */
+function readDirs(gp) {
+  const b = gp.buttons, ax = gp.axes;
+  const on = i => b[i] && b[i].pressed;
+  let u = 0, d = 0, l = 0, r = 0;
+
+  if (gp.mapping === "standard") {
+    if (on(12)) u = 1;
+    if (on(13)) d = 1;
+    if (on(14)) l = 1;
+    if (on(15)) r = 1;
+  } else {
+    if (on(14)) u = 1;          // Nintendo HID order
+    if (on(15)) d = 1;
+    if (on(16)) l = 1;
+    if (on(17)) r = 1;
+  }
+
+  /* Some Bluetooth reports pack the d-pad into a hat on axes[9]: eight
+     positions spread across -1..1, resting somewhere above 1. Only axes[9]
+     on a ten-axis report is treated this way, and the value has to land
+     close to one of the eight real positions — a stick sitting at 0.00 is
+     otherwise half a step from "down" and would drive the crane by itself. */
+  if (ax.length >= 10) {
+    const h = ax[9];
+    if (h != null && h >= -1.001 && h <= 1.001) {
+      const pos = (h + 1) * 3.5;                 // 0 = up, then clockwise
+      const k = Math.round(pos);
+      if (k >= 0 && k <= 7 && Math.abs(pos - k) < 0.22) {
+        if (k === 7 || k === 0 || k === 1) u = 1;
+        if (k === 1 || k === 2 || k === 3) r = 1;
+        if (k === 3 || k === 4 || k === 5) d = 1;
+        if (k === 5 || k === 6 || k === 7) l = 1;
+      }
+    }
+  }
+  return { u: u, d: d, l: l, r: r };
+}
 
 const IN = { A: 0, B: 0, X: 0, Y: 0, L: 0, R: 0, left: 0, right: 0, up: 0, down: 0, plus: 0, select: 0 };
 const WAS = Object.assign({}, IN);
 const KEY = {};
 let padName = "", lastRawPress = -1, stick = 0, stickY = 0;
+let diagPad = null, showDiag = false;
 
 function pollPad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   let gp = null;
   for (let i = 0; i < pads.length; i++) if (pads[i] && pads[i].connected) { gp = pads[i]; break; }
   padName = gp ? gp.id : "";
+  if (gp) {
+    if (gp.id !== padId) {                 // a different pad, or the same one
+      padId = gp.id;                       // reconnected over another transport
+      bind = profiles[padId] || null;
+    }
+    padMapping = gp.mapping || "non-standard";
+    padAxes = gp.axes.length;
+    padButtons = gp.buttons.length;
+  }
 
   for (const k in IN) WAS[k] = IN[k];
   for (const k in IN) IN[k] = 0;
@@ -119,10 +186,11 @@ function pollPad() {
     if (down(5) || down(7)) IN.R = 1;
     if (down(8)) IN.select = 1;   // the - button, Switch's select
     if (down(9)) IN.plus = 1;
-    if (down(14)) IN.left = 1;
-    if (down(15)) IN.right = 1;
-    if (down(12)) IN.up = 1;
-    if (down(13)) IN.down = 1;
+    const dirs = readDirs(gp);
+    if (dirs.l) IN.left = 1;
+    if (dirs.r) IN.right = 1;
+    if (dirs.u) IN.up = 1;
+    if (dirs.d) IN.down = 1;
     const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
     stick = Math.abs(ax) > 0.18 ? ax : 0;
     stickY = Math.abs(ay) > 0.18 ? ay : 0;
@@ -140,6 +208,7 @@ function pollPad() {
   if (KEY.p) IN.X = 1;
   if (KEY.r) IN.Y = 1;
   if (KEY['-']) IN.select = 1;
+  diagPad = gp;
   if (KEY.ArrowLeft) { IN.left = 1; stick = -1; }
   if (KEY.ArrowRight) { IN.right = 1; stick = 1; }
   if (KEY.ArrowUp) { IN.up = 1; stickY = -1; }
@@ -285,6 +354,7 @@ function saveProbs() { try { localStorage.setItem("sharingyard.probs", String(pr
 let probIdx = 0;
 let setupSel = 0;
 let toastT = 0, toastMsg = "";
+let diagLatch = false;
 
 function spawnGulls() {
   gulls = [];
@@ -422,6 +492,8 @@ function update(dt) {
   if (shake > 0) shake = Math.max(0, shake - dt * 3.2);
   if (slipFlash > 0) slipFlash = Math.max(0, slipFlash - dt * 0.8);
   if (toastT > 0) toastT = Math.max(0, toastT - dt);
+  if (KEY.d && !diagLatch) { showDiag = !showDiag; diagLatch = true; }
+  if (!KEY.d) diagLatch = false;
 
   /* the - button (select) adjusts the turn length at any time, mid-lesson */
   if (hit("select") && state !== St.BOOT && state !== St.CAL_B) {
@@ -437,7 +509,17 @@ function update(dt) {
     if (!bind) {
       if (lastRawPress >= 0) { audioOn(); bind = { A: lastRawPress }; state = St.CAL_B; SFX.tick(); }
       else if (KEY.Enter) { audioOn(); bind = Object.assign({}, DEFAULT_BIND); saveBind(bind); startSetup(); }
-    } else if (hit("A")) { audioOn(); startSetup(); }
+    } else if (hit("A")) {
+      audioOn();
+      if (KEY.s) {                       // hold S: forget this pad and set it up again
+        delete profiles[padId];
+        persistProfiles();
+        bind = null;                     // the next press becomes the new "A"
+        SFX.tick();
+        return;
+      }
+      startSetup();
+    }
     else if (KEY.s && lastRawPress < 0 && KEY.Enter) { bind = null; }
     return;
   }
@@ -644,6 +726,8 @@ function draw() {
   else if (state === St.PICKER) drawPicker();
   else drawGame();
 
+  if (showDiag) drawDiag();
+
   if (toastT > 0) {
     const a = Math.min(1, toastT / 0.4);
     ctx.globalAlpha = a;
@@ -653,6 +737,49 @@ function draw() {
     text(toastMsg, V.w / 2, 40, 30, C.bg, "center", "800", 4);
     ctx.globalAlpha = 1;
   }
+}
+
+/* Press D at any time. This is what to read out if a pad misbehaves. */
+function drawDiag() {
+  const w = 660, x = V.w - w - 24, y = 24;
+  ctx.globalAlpha = 0.93;
+  ctx.fillStyle = "#050704";
+  roundRect(x, y, w, 316, 8); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = C.divisor; ctx.lineWidth = 2;
+  roundRect(x, y, w, 316, 8); ctx.stroke();
+
+  const L = (s, i, col) => text(s, x + 18, y + 34 + i * 26, 17, col || C.ink, "left", "700");
+  L("CONTROLLER — press D to hide", 0, C.divisor);
+  if (!diagPad) {
+    L("no controller found", 1, C.remainder);
+    L("keyboard: arrows move, Enter = A,", 2, C.dim);
+    L("Backspace = B, R = Y, minus = select", 3, C.dim);
+    return;
+  }
+  L((padName || "?").slice(0, 46), 1, C.dim);
+  L("mapping: " + padMapping + "   buttons: " + padButtons + "   axes: " + padAxes, 2, C.dim);
+
+  const bd = bind || DEFAULT_BIND;
+  L("bound  A=" + bd.A + "  B=" + bd.B + "  X=" + bd.X + "  Y=" + bd.Y +
+    (bind ? "  (calibrated)" : "  (default)"), 3, bind ? C.quotient : C.divisor);
+
+  let pressed = [];
+  for (let i = 0; i < diagPad.buttons.length; i++)
+    if (diagPad.buttons[i] && diagPad.buttons[i].pressed) pressed.push(i);
+  L("pressed: " + (pressed.length ? pressed.join(", ") : "-"), 4,
+    pressed.length ? C.quotient : C.dim);
+
+  let axs = [];
+  for (let i = 0; i < diagPad.axes.length; i++) axs.push(i + ":" + diagPad.axes[i].toFixed(2));
+  L("axes " + axs.slice(0, 5).join("  "), 5, C.dim);
+  if (axs.length > 5) L("     " + axs.slice(5, 10).join("  "), 6, C.dim);
+
+  const d = readDirs(diagPad);
+  L("dirs   " + (d.u ? "UP " : "-- ") + (d.d ? "DOWN " : "---- ") +
+                (d.l ? "LEFT " : "---- ") + (d.r ? "RIGHT" : "-----"), 7, C.divisor);
+  L("stick  x " + (diagPad.axes[0] || 0).toFixed(2) + "   y " + (diagPad.axes[1] || 0).toFixed(2), 8, C.divisor);
+  L("hold S then press A to calibrate again", 10, C.dim);
 }
 
 function drawBoot() {
@@ -669,7 +796,11 @@ function drawBoot() {
   } else {
     text("PRESS   A   TO START", V.w / 2, 540, 44, C.divisor, "center", "800", 5);
     text(padName ? "controller: " + padName.slice(0, 44) : "no controller found — arrows + Enter also work",
-         V.w / 2, 670, 20, C.dim, "center", "600");
+         V.w / 2, 664, 20, C.dim, "center", "600");
+    if (padName)
+      text(padMapping + " mapping · " + (bind ? "this pad is set up" : "not set up yet — hold S then press A"),
+           V.w / 2, 694, 18, bind ? C.quotient : C.divisor, "center", "600");
+    text("press D any time to see what the controller is sending", V.w / 2, 830, 18, C.dim, "center", "600");
   }
 }
 

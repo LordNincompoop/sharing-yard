@@ -66,6 +66,22 @@ mid-lesson — useful when time is short and half the class hasn't had a go.
 On the first run the game asks you to press the button marked **A**, then the one
 marked **B**, and remembers. No controller? Arrow keys and Enter work too.
 
+### Controllers
+
+Works with a Nintendo Switch Pro Controller **over USB and over Bluetooth**.
+Windows hands those to the browser as two different devices — different button
+counts, different d-pad, different everything — so each connection is set up
+once (two button presses) and remembered separately against that controller.
+Plug the cable in after a Bluetooth lesson and it will ask once more, then never
+again.
+
+Press **D** at any time for a diagnostics overlay showing exactly what the pad is
+reporting: its name, its mapping, which buttons are down, and live stick values.
+That is the thing to look at if a controller behaves oddly.
+
+Hold **S** and press **A** on the title screen to set a controller up again from
+scratch.
+
 ## What makes it more than an animation
 
 - **Both divisions.** Sharing (`12 cars into 3 circles` → 4 each) and grouping
