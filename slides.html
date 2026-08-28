@@ -120,6 +120,9 @@ button[disabled]:hover{background:transparent;color:var(--ink)}
 .prompts span{font-family:var(--f-util);font-size:clamp(11px,1.25vw,14px);font-weight:700;
   letter-spacing:.06em;padding:8px 13px;border:1px solid var(--rule);border-radius:2px;
   background:var(--panel);color:var(--ink-2)}
+.wake{font-family:var(--f-util);font-size:clamp(11px,1.25vw,14px);line-height:1.5;
+  color:var(--knock);background:var(--accent);border-radius:3px;padding:10px 14px;
+  margin:0;text-align:center;max-width:70ch;align-self:center}
 #stopbtn{align-self:center}
 </style>
 
@@ -425,6 +428,7 @@ button[disabled]:hover{background:transparent;color:var(--ink)}
 
   <div class="playstage" id="playStage" hidden>
     <div id="frameHolder"></div>
+    <p class="wake" id="wake">Click once on the game above before using the controller — browsers keep controllers hidden until the page is clicked.</p>
     <div class="prompts" aria-label="Questions to ask while you play">
       <span>How many cars altogether?</span>
       <span>How many circles?</span>
@@ -491,6 +495,7 @@ button[disabled]:hover{background:transparent;color:var(--ink)}
     playStage.hidden = false;
     playSlide.classList.add("playing");
     playing = true;
+    var w = document.getElementById("wake"); if (w) w.style.display = "";
     setTimeout(function () { try { f.focus(); } catch (err) {} }, 60);
   }
   function stopGame() {
@@ -501,6 +506,13 @@ button[disabled]:hover{background:transparent;color:var(--ink)}
     playing = false;
   }
   document.getElementById("playbtn").addEventListener("click", startGame);
+  /* once the pointer goes into the frame the browser has its gesture,
+     so the reminder has done its job */
+  window.addEventListener("blur", function () {
+    if (playing && document.activeElement && document.activeElement.tagName === "IFRAME") {
+      var w = document.getElementById("wake"); if (w) w.style.display = "none";
+    }
+  });
   document.getElementById("stopbtn").addEventListener("click", stopGame);
 
   document.addEventListener("keydown", function (e) {

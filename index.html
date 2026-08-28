@@ -153,6 +153,17 @@ const WAS = Object.assign({}, IN);
 const KEY = {};
 let padName = "", lastRawPress = -1, stick = 0, stickY = 0;
 let diagPad = null, showDiag = false;
+let rawPrev = {};
+
+/* Browsers hide controllers until the PAGE itself has been clicked or typed
+   into. Pressing buttons on the pad does not count. Until that happens
+   navigator.getGamepads() hands back nothing, which looks exactly like a dead
+   controller - so the title screen says what to do about it. */
+let gestured = false;
+function noteGesture() { gestured = true; audioOn(); }
+addEventListener("pointerdown", noteGesture, true);
+addEventListener("keydown", noteGesture, true);
+addEventListener("touchstart", noteGesture, true);
 
 function pollPad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -163,6 +174,7 @@ function pollPad() {
     if (gp.id !== padId) {                 // a different pad, or the same one
       padId = gp.id;                       // reconnected over another transport
       bind = profiles[padId] || null;
+      rawPrev = null;                      // seed on this frame, see below
     }
     padMapping = gp.mapping || "non-standard";
     padAxes = gp.axes.length;
@@ -176,8 +188,18 @@ function pollPad() {
   if (gp) {
     const b = gp.buttons, bd = bind || DEFAULT_BIND;
     const down = i => i != null && b[i] && b[i].pressed;
+    /* A newly pressed button, not merely a held one. Some pads report a
+       button as permanently down; without this, calibration would grab that
+       stuck index the instant the screen appeared and bind it to A. */
     lastRawPress = -1;
-    for (let i = 0; i < b.length; i++) if (b[i] && b[i].pressed) { lastRawPress = i; break; }
+    const seeding = rawPrev === null;   // first frame of a newly seen pad:
+    const nowDown = {};                 // record what is down, report nothing
+    for (let i = 0; i < b.length; i++) {
+      if (!(b[i] && b[i].pressed)) continue;
+      nowDown[i] = 1;
+      if (!seeding && !rawPrev[i] && lastRawPress < 0) lastRawPress = i;
+    }
+    rawPrev = nowDown;
     if (down(bd.A)) IN.A = 1;
     if (down(bd.B)) IN.B = 1;
     if (down(bd.X)) IN.X = 1;
@@ -200,6 +222,7 @@ function pollPad() {
     if (ay > 0.55) IN.down = 1;
   } else {
     lastRawPress = -1;
+    rawPrev = {};
   }
 
   // keyboard fallback, always live
@@ -792,15 +815,38 @@ function drawBoot() {
     ctx.beginPath(); ctx.arc(V.w / 2, 600, 70, 0, Math.PI * 2); ctx.fill();
     text("A", V.w / 2, 604, 76, C.bg, "center", "800");
     text("on your controller — the one on the right", V.w / 2, 718, 23, C.dim, "center", "600");
-    text("no controller?  press ENTER for keyboard", V.w / 2, 830, 20, C.dim, "center", "600");
+    if (!padName) drawWakeNote(770);
+    else text("no controller?  press ENTER for keyboard", V.w / 2, 830, 20, C.dim, "center", "600");
   } else {
-    text("PRESS   A   TO START", V.w / 2, 540, 44, C.divisor, "center", "800", 5);
-    text(padName ? "controller: " + padName.slice(0, 44) : "no controller found — arrows + Enter also work",
-         V.w / 2, 664, 20, C.dim, "center", "600");
-    if (padName)
+    text("PRESS   A   TO START", V.w / 2, 528, 44, C.divisor, "center", "800", 5);
+    if (padName) {
+      text("controller: " + padName.slice(0, 44), V.w / 2, 640, 20, C.dim, "center", "600");
       text(padMapping + " mapping · " + (bind ? "this pad is set up" : "not set up yet — hold S then press A"),
-           V.w / 2, 694, 18, bind ? C.quotient : C.divisor, "center", "600");
-    text("press D any time to see what the controller is sending", V.w / 2, 830, 18, C.dim, "center", "600");
+           V.w / 2, 670, 18, bind ? C.quotient : C.divisor, "center", "600");
+    } else {
+      drawWakeNote(628);
+    }
+    text("press D any time to see what the controller is sending", V.w / 2, 838, 18, C.dim, "center", "600");
+  }
+}
+
+/* The single most common "my controller does nothing" cause, said plainly. */
+function drawWakeNote(y) {
+  const pulse = gestured ? 1 : 0.72 + 0.28 * Math.sin(t * 4);
+  ctx.save();
+  ctx.globalAlpha = pulse;
+  ctx.strokeStyle = gestured ? C.dim : C.divisor;
+  ctx.lineWidth = 3;
+  roundRect(V.w / 2 - 430, y, 860, gestured ? 74 : 100, 10);
+  ctx.stroke();
+  ctx.restore();
+  if (!gestured) {
+    text("CLICK ANYWHERE ON THIS SCREEN FIRST", V.w / 2, y + 32, 27, C.divisor, "center", "800", 3);
+    text("browsers keep controllers hidden until the page is clicked —", V.w / 2, y + 64, 19, C.dim, "center", "600");
+    text("one click, then press A on the pad", V.w / 2, y + 86, 19, C.dim, "center", "600");
+  } else {
+    text("no controller found", V.w / 2, y + 26, 22, C.dim, "center", "700", 2);
+    text("turn it on and press a button · or play with the arrow keys and Enter", V.w / 2, y + 54, 18, C.dim, "center", "600");
   }
 }
 
@@ -1139,6 +1185,13 @@ function drawGame() {
       text(Q.mode === "share" ? "count one circle again" : "count the circles again",
            V.w / 2, 292, 30, C.remainder, "center", "700", 2);
     }
+  }
+
+  /* if the pad disappears mid-lesson, say so rather than just going dead */
+  if (!padName && !gestured) {
+    ctx.fillStyle = C.divisor;
+    roundRect(V.w / 2 - 330, 8, 660, 46, 8); ctx.fill();
+    text("CLICK THE SCREEN ONCE TO WAKE THE CONTROLLER", V.w / 2, 31, 21, C.bg, "center", "800", 2);
   }
 
   /* badges */
