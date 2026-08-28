@@ -81,23 +81,29 @@ const SFX = {
    bind the button printed B — cancel on every Nintendo console.
    So the first run asks which button is which.
 ----------------------------------------- */
-/* Which index does the button PRINTED "A" actually send?
+/* A standard-mapped pad reports by POSITION, always:
+       index 0 = bottom, 1 = right, 2 = left, 3 = top
 
-   An 8BitDo in X-input mode remaps by LABEL: the button marked A is wired to
-   the platform's A, so it arrives as index 0 even though it sits on the right
-   where Nintendo prints it. That is the point of X-input mode - "press A"
-   prompts work with the button marked A. Every Xbox-style pad does the same.
+   What those positions are CALLED depends on what is printed on the pad:
 
-   A pad read through Nintendo's own HID report keeps Nintendo's order instead,
-   where A is index 1.
+       Nintendo printing   A right, B bottom, X top,  Y left
+       Xbox printing       A bottom, B right, X left, Y top
 
-   So the default follows the report, not the printing. Press A, get A. */
-const BIND_XINPUT   = { A: 0, B: 1, X: 2, Y: 3 };   // standard / X-input pads
-const BIND_NINTENDO = { A: 1, B: 0, X: 3, Y: 2 };   // raw Nintendo HID
+   So on a Nintendo-printed pad the letters land swapped in pairs - the button
+   marked A reports as the platform's B, and the button marked Y reports as X.
+   One setting therefore has to drive both the bindings and the glyphs, or the
+   picture and the buttons disagree. That setting is glyphLayout, flipped with L. */
+const BIND_BY_PRINTING = {
+  nintendo: { A: 1, B: 0, X: 3, Y: 2 },   // A right, B bottom, X top, Y left
+  xbox:     { A: 0, B: 1, X: 2, Y: 3 }    // A bottom, B right, X left, Y top
+};
+const BIND_NINTENDO_HID = { A: 1, B: 0, X: 3, Y: 2 };  // raw Nintendo HID report
+
 function defaultBindFor(mapping) {
-  return Object.assign({}, mapping === "standard" ? BIND_XINPUT : BIND_NINTENDO);
+  if (mapping !== "standard") return Object.assign({}, BIND_NINTENDO_HID);
+  return Object.assign({}, BIND_BY_PRINTING[glyphLayout] || BIND_BY_PRINTING.nintendo);
 }
-const DEFAULT_BIND = BIND_XINPUT;
+const DEFAULT_BIND = BIND_BY_PRINTING.nintendo;
 
 /* One remembered profile per controller, keyed by the id the browser
    reports. The same pad on USB and on Bluetooth reports two different
@@ -372,10 +378,6 @@ function drawCar(x, y, w, color) {
    Ultimate, SN30, a real Pro Controller) put A on the right; Xbox-style pads
    put A at the bottom. This is about the printing only - which index each
    button reports is settled separately, by the calibration. */
-const FACE_LAYOUTS = {
-  nintendo: { X: [0, -1], Y: [-1, 0], A: [1, 0], B: [0, 1] },
-  xbox:     { Y: [0, -1], X: [-1, 0], B: [1, 0], A: [0, 1] }
-};
 let glyphLayout = (function () {
   try {
     const v = localStorage.getItem("sharingyard.layout");
@@ -383,6 +385,10 @@ let glyphLayout = (function () {
   } catch (e) {}
   return "nintendo";
 })();
+const FACE_LAYOUTS = {
+  nintendo: { X: [0, -1], Y: [-1, 0], A: [1, 0], B: [0, 1] },
+  xbox:     { Y: [0, -1], X: [-1, 0], B: [1, 0], A: [0, 1] }
+};
 function saveLayout() { try { localStorage.setItem("sharingyard.layout", glyphLayout); } catch (e) {} }
 function facePos() { return FACE_LAYOUTS[glyphLayout]; }
 
@@ -661,7 +667,9 @@ function update(dt) {
     layoutLatch = true;
     glyphLayout = glyphLayout === "nintendo" ? "xbox" : "nintendo";
     saveLayout();
-    toastMsg = glyphLayout === "nintendo" ? "BUTTONS: A ON THE RIGHT" : "BUTTONS: A AT THE BOTTOM";
+    // the picture and the buttons move together, unless this pad was set by hand
+    if (!profiles[padId]) bind = defaultBindFor(padMapping === "standard" ? "standard" : "");
+    toastMsg = glyphLayout === "nintendo" ? "A ON THE RIGHT" : "A AT THE BOTTOM";
     toastT = 1.8;
     SFX.tick();
   }
@@ -970,29 +978,15 @@ function drawDiag() {
 }
 
 function drawBoot() {
-  text("SHARING YARD", V.w / 2, 206, 100, C.ink, "center", "800", 6);
-  text("division you can watch happen", V.w / 2, 286, 27, C.dim, "center", "600", 3);
+  text("SHARING YARD", V.w / 2, 296, 116, C.ink, "center", "800", 6);
+  text("division you can watch happen", V.w / 2, 388, 29, C.dim, "center", "600", 3);
+  hintLine(566, [{ t: "PRESS " }, { g: "A" }, { t: " TO START" }], 44, C.divisor);
 
-  if (!padName) {
-    drawWakeNote(352);
-    drawModeHelp(478);
-    text("or press ENTER to play with the arrow keys", V.w / 2, 722, 20, C.dim, "center", "600");
-    return;
-  }
-
-  hintLine(392, [{ t: "PRESS " }, { g: "A" }, { t: " TO START" }], 40, C.divisor);
-
-  if (looksLikeSwitchMode()) { drawModeHelp(460); return; }
-
-  glyphFace(V.w / 2, 592, 168, "A");
-  text(glyphLayout === "nintendo"
-         ? "A is the button on the RIGHT \u2014 the one marked A on your pad"
-         : "A is the button at the BOTTOM",
-       V.w / 2, 704, 21, C.dim, "center", "600");
-  text("letters in the wrong corners?  press L", V.w / 2, 736, 18, C.dim, "center", "600");
-  text("controller: " + padName.slice(0, 44), V.w / 2, 788, 17, C.dim, "center", "600");
-  text("hold S and press a button to set them by hand   \u00b7   D for details",
-       V.w / 2, 816, 17, C.dim, "center", "600");
+  if (!padName)
+    text("no controller yet - click the screen once, or press ENTER for the keys",
+         V.w / 2, 806, 19, C.dim, "center", "600");
+  else if (looksLikeSwitchMode())
+    text("controller is in Switch mode - set it to X-input", V.w / 2, 806, 19, C.divisor, "center", "600");
 }
 
 /* Does the picture agree with the pad? Hold a button and find out. */
