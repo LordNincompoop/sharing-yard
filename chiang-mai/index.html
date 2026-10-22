@@ -6,9 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Chiang Mai">
-<meta name="theme-color" content="#2c3a8c">
+<meta name="theme-color" content="#000000">
 <meta name="robots" content="noindex">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%232c3a8c%27/%3E%3Ctext x=%2750%27 y=%2768%27 font-size=%2752%27 text-anchor=%27middle%27 fill=%27%23fff%27 font-family=%27sans-serif%27 font-weight=%27700%27%3ECM%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%23000000%27/%3E%3Ctext x=%2750%27 y=%2768%27 font-size=%2752%27 text-anchor=%27middle%27 fill=%27%23fff%27 font-family=%27sans-serif%27 font-weight=%27700%27%3ECM%3C/text%3E%3C/svg%3E">
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
 <title>Chiang Mai Market Trip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,17 +16,17 @@
 <style>
 /* Layout: two day sections, each a plain list of stops with a Google Maps link */
 :root{
-  --bg:#f6f4ee; --card:#ffffff; --ink:#1f2340; --muted:#5d6180; --line:#dcd9cf;
-  --indigo:#2c3a8c; --gold:#e0a21a;
+  --bg:#ffffff; --card:#ffffff; --ink:#111111; --muted:#555555; --line:#d4d4d4;
+  --indigo:#111111; --gold:#111111;
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
   --body:"Figtree",ui-sans-serif,system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#14162a; --card:#1d2038; --ink:#ecebf4; --muted:#a3a6c4; --line:#33375a;
-  --indigo:#9aa6f2; --gold:#f0bb45; color-scheme:dark}}
+  --bg:#000000; --card:#000000; --ink:#f2f2f2; --muted:#a8a8a8; --line:#3a3a3a;
+  --indigo:#ffffff; --gold:#ffffff; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#14162a; --card:#1d2038; --ink:#ecebf4; --muted:#a3a6c4; --line:#33375a;
-  --indigo:#9aa6f2; --gold:#f0bb45; color-scheme:dark}
+  --bg:#000000; --card:#000000; --ink:#f2f2f2; --muted:#a8a8a8; --line:#3a3a3a;
+  --indigo:#ffffff; --gold:#ffffff; color-scheme:dark}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
 .wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
@@ -44,7 +44,7 @@ li{display:grid;grid-template-columns:52px 1fr;gap:10px;background:var(--card);b
 .name{font:600 16px/1.3 var(--display);margin:0}
 .opt{font:600 10.5px var(--body);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--muted);margin-left:6px;vertical-align:2px}
 .note{font-size:13.5px;color:var(--muted);margin:3px 0 0}
-.map{display:inline-block;margin-top:5px;font:600 13.5px var(--body);color:var(--indigo);text-decoration:none}
+.map{display:inline-block;margin-top:5px;font:600 13.5px var(--body);color:var(--indigo);text-decoration:underline;text-underline-offset:3px}
 a:hover{text-decoration:underline}
 a:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:4px}
 </style>
