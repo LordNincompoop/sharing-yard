@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Chiang Mai">
+<meta name="theme-color" content="#2c3a8c">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%232c3a8c%27/%3E%3Ctext x=%2750%27 y=%2768%27 font-size=%2752%27 text-anchor=%27middle%27 fill=%27%23fff%27 font-family=%27sans-serif%27 font-weight=%27700%27%3ECM%3C/text%3E%3C/svg%3E">
+<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+<title>Chiang Mai Market Trip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: two day sections, each a plain list of stops with a Google Maps link */
+:root{
+  --bg:#f6f4ee; --card:#ffffff; --ink:#1f2340; --muted:#5d6180; --line:#dcd9cf;
+  --indigo:#2c3a8c; --gold:#e0a21a;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Figtree",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14162a; --card:#1d2038; --ink:#ecebf4; --muted:#a3a6c4; --line:#33375a;
+  --indigo:#9aa6f2; --gold:#f0bb45; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14162a; --card:#1d2038; --ink:#ecebf4; --muted:#a3a6c4; --line:#33375a;
+  --indigo:#9aa6f2; --gold:#f0bb45; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,7vw,38px);line-height:1.05;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:6px 0 0}
+section{display:flex;flex-direction:column;gap:8px}
+h2{font:800 22px/1.2 var(--display);margin:0;text-wrap:balance}
+.dayhead{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
+.route{font:600 13.5px var(--body);color:var(--indigo);text-decoration:none}
+.slot{font:600 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:8px 0 0}
+ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+li{display:grid;grid-template-columns:52px 1fr;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.time{font:600 14px var(--body);font-variant-numeric:tabular-nums;color:var(--muted);padding-top:1px}
+.body{min-width:0}
+.name{font:600 16px/1.3 var(--display);margin:0}
+.opt{font:600 10.5px var(--body);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--muted);margin-left:6px;vertical-align:2px}
+.note{font-size:13.5px;color:var(--muted);margin:3px 0 0}
+.map{display:inline-block;margin-top:5px;font:600 13.5px var(--body);color:var(--indigo);text-decoration:none}
+a:hover{text-decoration:underline}
+a:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Chiang Mai Market Trip</h1>
+    <p class="sub">Fri 23 – Sat 24 October · leave Mae Chan 5:00 on Friday</p>
+  </header>
+  <div id="days"></div>
+</div>
+
+<script>
+const STOPS = [
+ {day:1,slot:"On the way from Mae Chan",time:"6:30",name:"Origin Bean Coffee",opt:1,note:"Big coffee stop on Route 118, about 5 km past Mae Suai. Indoor and outdoor seating. Opening time not confirmed, so drive on if it's shut.",q:"Origin Bean Coffee Mae Suai"},
+ {day:1,slot:"On the way from Mae Chan",time:"7:15",name:"Mae Kachan Hot Spring",note:"Opens 6:00. Breakfast stop: boil eggs in the spring, soak your feet at Nine One Coffee, toilets. Quiet before the tour vans.",q:"Mae Kachan Hot Spring Wiang Pa Pao"},
+ {day:1,slot:"On the way from Mae Chan",time:"8:30",name:"Coffee Terminal",opt:1,note:"Air-con café with a balcony, about 4 km before Doi Saket, on your side of the road. Last stretch is 30 min to the city.",q:"Coffee Terminal Doi Saket"},
+ {day:1,slot:"Morning",time:"9:15",name:"Friday Yunnan (Muslim) Market",note:"Back on the list now you arrive earlier. Friday-only, by Ban Haw Mosque: samosas, mohinga, Shan noodles. Winds down mid-morning.",cid:"6301667864020871943"},
+ {day:1,slot:"Late morning",time:"10:30",name:"Somphet Market",note:"Small Old City fresh market by Tha Phae Gate. Fruit shakes, grilled snacks, Thai sweets.",q:"Somphet Market Chiang Mai"},
+ {day:1,slot:"Late morning",time:"11:15",name:"Tha Phae Gate",note:"2-min walk from Somphet. The classic Chiang Mai photo by the old brick wall and moat.",q:"Tha Phae Gate Chiang Mai"},
+ {day:1,slot:"Late morning",time:"12:30",name:"Central Festival Chiang Mai",note:"Lunch in the air-con food hall and a wander until check-in. Right next to the hotel.",q:"Central Festival Chiang Mai"},
+ {day:1,slot:"Afternoon",time:"2:00",name:"Check in: Moose EASY Hotel",note:"Check-in after 14:00. Short rest.",q:"Moose Easy Hotel Fa Ham Chiang Mai"},
+ {day:1,slot:"Afternoon",time:"3:30",name:"Art in Paradise",opt:1,note:"3D illusion art museum, fun photos, air-con. About 15 min from the hotel. Takes about an hour.",q:"Art in Paradise Chiang Mai"},
+ {day:1,slot:"Evening",time:"5:00",name:"Kad Kongkao / Lanna Square",note:"Friday-only walking street, food court next door.",cid:"1060688020538713953"},
+ {day:1,slot:"Evening",time:"6:30",name:"Chang Phueak (North Gate) Market",note:"Dinner: famous stewed pork leg stall. Expect a queue.",cid:"8054357250613599001"},
+ {day:1,slot:"Evening",time:"8:00",name:"Night Bazaar",note:"Shopping stroll on Chang Klan Rd.",cid:"805850765827944477"},
+ {day:1,slot:"Evening",time:"8:45",name:"Ploen Ruedee Night Market",note:"Food stalls and live music.",cid:"7196595335537976964"},
+ {day:1,slot:"Evening",time:"9:15",name:"Kalare Night Bazaar",note:"Inside the Night Bazaar zone.",cid:"13876118437728147131"},
+ {day:1,slot:"Evening",time:"9:45",name:"Anusarn Market",note:"Last stop: late snack at the food court.",cid:"561859415891005858"},
+
+ {day:2,slot:"Early markets",time:"7:00",name:"Jing Jai Market",note:"Weekend farmers' and craft market. Own car park. Grab breakfast here.",cid:"11511114691515616006"},
+ {day:2,slot:"Early markets",time:"8:00",name:"Thanin Market (Siri Wattana)",note:"5 min away. Local cooked food and fruit.",cid:"5114455481968313788"},
+ {day:2,slot:"Early markets",time:"9:00",name:"Warorot Market",note:"Moved from Friday. Northern sausage, snacks, cheap souvenirs.",cid:"2648256326189542464"},
+ {day:2,slot:"Early markets",time:"9:45",name:"Ton Lam Yai Market",note:"Next door to Warorot: dried fruit, spices, flowers.",cid:"8774498114757061699"},
+ {day:2,slot:"Early markets",time:"10:15",name:"Muang Mai Market",note:"Big wholesale fruit and veg market by the river, 5 min from Warorot. Cheap fresh fruit for the road.",q:"Muang Mai Market Chiang Mai"},
+ {day:2,slot:"Early markets",time:"11:30",name:"Check out: Moose EASY Hotel",note:"Shower, pack and check out before 12:00.",q:"Moose Easy Hotel Fa Ham Chiang Mai"},
+ {day:2,slot:"Afternoon",time:"12:30",name:"Huay Tung Tao Lake",note:"Lunch in bamboo huts over the water, mountain views. About 25 min north. Small entry fee.",cid:"3473402653889272717"},
+ {day:2,slot:"Afternoon",time:"2:30",name:"Nimman Road + One Nimman",note:"Trendy street of cafés and small shops. One Nimman has air-con and a weekend craft market.",cid:"4179123163732524983"},
+ {day:2,slot:"Afternoon",time:"3:45",name:"Baan Kang Wat",note:"Artist village with craft shops, pottery and cafés in the trees. Open till 6pm.",cid:"6561582910531882655"},
+ {day:2,slot:"Evening",time:"5:00",name:"Kad Na Mor (CMU Market)",note:"Student market. Parking about 20 baht.",cid:"16039942507088366045"},
+ {day:2,slot:"Evening",time:"6:15",name:"Chiang Mai Gate Market",note:"Park nearby before 6pm. Cheap khao soi.",cid:"14501863873841167432"},
+ {day:2,slot:"Evening",time:"7:30",name:"Wua Lai Saturday Walking Street",note:"Main event until about 11pm.",cid:"9528490394611933464"}
+];
+const gm=s=>s.cid?"https://maps.google.com/?cid="+s.cid:"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(s.q);
+const esc=t=>t.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let html="";
+[[1,"Day 1 · Fri 23 Oct"],[2,"Day 2 · Sat 24 Oct"]].forEach(([d,label])=>{
+  const stops=STOPS.filter(s=>s.day===d);
+  html+=`<section><div class="dayhead"><h2>${label}</h2></div>`;
+  let slot="";
+  stops.forEach(s=>{
+    if(s.slot!==slot){ if(slot) html+="</ol>"; slot=s.slot; html+=`<p class="slot">${esc(slot)}</p><ol>`; }
+    html+=`<li><span class="time">${s.time}</span><div class="body"><p class="name">${esc(s.name)}${s.opt?'<span class="opt">Optional</span>':''}</p><p class="note">${esc(s.note)}</p><a class="map" href="${gm(s)}" target="_blank" rel="noopener">Google Maps ↗</a></div></li>`;
+  });
+  html+="</ol></section>";
+});
+document.getElementById("days").innerHTML=html;
+document.querySelector(".wrap").style.gap="22px";
+</script>
+
+</body>
+</html>
