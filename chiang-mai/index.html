@@ -46,6 +46,10 @@ li{display:grid;grid-template-columns:52px 1fr;gap:10px;background:var(--card);b
 .note{font-size:13.5px;color:var(--muted);margin:3px 0 0}
 .map{display:inline-block;margin-top:5px;font:600 13.5px var(--body);color:var(--indigo);text-decoration:underline;text-underline-offset:3px}
 a:hover{text-decoration:underline}
+.routes{display:flex;flex-direction:column;gap:6px;margin:4px 0 2px}
+.routes a{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1.5px solid var(--ink);border-radius:10px;padding:10px 12px;color:var(--ink);text-decoration:none;font:600 14px var(--body)}
+.routes a span{color:var(--muted);font-weight:500;font-size:12.5px}
+.rtitle{font:600 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
 a:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:4px}
 </style>
 </head>
@@ -90,12 +94,22 @@ const STOPS = [
  {day:2,slot:"Evening",time:"6:15",name:"Chiang Mai Gate Market",note:"Park nearby before 6pm. Cheap khao soi.",cid:"14501863873841167432"},
  {day:2,slot:"Evening",time:"7:30",name:"Wua Lai Saturday Walking Street",note:"Main event until about 11pm.",cid:"9528490394611933464"}
 ];
+const R=(o,d,w)=>"https://www.google.com/maps/dir/?api=1&travelmode=driving&origin="+encodeURIComponent(o)+"&destination="+encodeURIComponent(d)+(w&&w.length?"&waypoints="+encodeURIComponent(w.join("|")):"");
+const HOTEL="Moose Easy Hotel Fa Ham Chiang Mai";
+const ROUTES={
+ 1:[["Drive down","Mae Chan → Hot Spring → Yunnan Market",R("Mae Chan, Chiang Rai","Ban Haw Mosque Chiang Mai",["Mae Kachan Hot Spring Wiang Pa Pao"])],
+    ["City morning","Somphet → Tha Phae Gate → Central → Hotel",R("Ban Haw Mosque Chiang Mai",HOTEL,["Somphet Market Chiang Mai","Tha Phae Gate Chiang Mai","Central Festival Chiang Mai"])],
+    ["Evening markets","Kad Kongkao → Chang Phueak → Night Bazaar",R(HOTEL,"Chiang Mai Night Bazaar",["Kad Kongkao Lanna Square Chiang Mai","Chang Phueak Night Market Chiang Mai"])]],
+ 2:[["Morning markets","Jing Jai → Thanin → Warorot → Muang Mai",R(HOTEL,"Muang Mai Market Chiang Mai",["Jing Jai Market Chiang Mai","Thanin Market Chiang Mai","Warorot Market Chiang Mai"])],
+    ["Afternoon","Hotel → Huay Tung Tao → One Nimman → Baan Kang Wat",R("Muang Mai Market Chiang Mai","Baan Kang Wat Chiang Mai",[HOTEL,"Huay Tung Tao Lake Chiang Mai","One Nimman Chiang Mai"])],
+    ["Evening","Kad Na Mor → Chiang Mai Gate (walk to Wua Lai)",R("Baan Kang Wat Chiang Mai","Chiang Mai Gate Market",["Kad Na Mor Chiang Mai University"])]]
+};
 const gm=s=>s.cid?"https://maps.google.com/?cid="+s.cid:"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(s.q);
 const esc=t=>t.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let html="";
 [[1,"Day 1 · Fri 23 Oct"],[2,"Day 2 · Sat 24 Oct"]].forEach(([d,label])=>{
   const stops=STOPS.filter(s=>s.day===d);
-  html+=`<section><div class="dayhead"><h2>${label}</h2></div>`;
+  html+=`<section><div class="dayhead"><h2>${label}</h2></div><p class="rtitle">Driving routes</p><div class="routes">`+ROUTES[d].map(([t,sub,u])=>`<a href="${u}" target="_blank" rel="noopener"><div>${t}<br><span>${sub}</span></div>Maps ↗</a>`).join("")+`</div>`;
   let slot="";
   stops.forEach(s=>{
     if(s.slot!==slot){ if(slot) html+="</ol>"; slot=s.slot; html+=`<p class="slot">${esc(slot)}</p><ol>`; }
