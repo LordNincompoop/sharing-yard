@@ -65,11 +65,11 @@ a:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:4
 
 <script>
 const STOPS = [
- {day:1,slot:"On the way from Mae Chan",time:"10:45",name:"Leave Mae Kachan Hot Spring",note:"About 1 hr 15 min to Chiang Mai. Central Festival is on your way in, so go straight there.",q:"Mae Kachan Hot Spring Wiang Pa Pao"},
- {day:1,slot:"Lunch",time:"~12:00",name:"Central Festival Chiang Mai",note:"Lunch in the air-con food hall and a wander until check-in. Right next to the hotel, so park once.",q:"Central Festival Chiang Mai"},
- {day:1,slot:"Afternoon",time:"2:00",name:"Check in: Moose EASY Hotel",note:"Check-in after 14:00. Quick rest.",q:"Moose Easy Hotel Fa Ham Chiang Mai"},
- {day:1,slot:"Afternoon",time:"~3:00",name:"Tha Phae Gate + Somphet Market",note:"Classic photo at the old wall. Somphet is a morning market, so only some snack and fruit stalls may still be open.",q:"Tha Phae Gate Chiang Mai"},
- {day:1,slot:"Afternoon",time:"~3:45",name:"Art in Paradise",opt:1,note:"3D illusion art museum, fun photos, air-con. About 1 hour. Skip it if you're tired.",q:"Art in Paradise Chiang Mai"},
+ {day:1,slot:"On the way from Mae Chan",time:"10:45",name:"Leave Mae Kachan Hot Spring",note:"About 1 hr 15 min to Tha Phae Gate.",q:"Mae Kachan Hot Spring Wiang Pa Pao"},
+ {day:1,slot:"Midday",time:"~12:00",name:"Tha Phae Gate + Somphet Market",note:"Classic photo at the old wall, then snacks and fruit shakes at Somphet, a 2-min walk. Park on the moat road or at the Tha Phae Gate car park.",q:"Tha Phae Gate Chiang Mai"},
+ {day:1,slot:"Midday",time:"~1:00",name:"Central Festival Chiang Mai",note:"Lunch in the air-con food hall. Right next to the hotel, so you can check in after.",q:"Central Festival Chiang Mai"},
+ {day:1,slot:"Afternoon",time:"2:00",name:"Check in: Moose EASY Hotel",note:"Check-in after 14:00. Rest a bit.",q:"Moose Easy Hotel Fa Ham Chiang Mai"},
+ {day:1,slot:"Afternoon",time:"~3:30",name:"Art in Paradise",opt:1,note:"3D illusion art museum, fun photos, air-con. About 1 hour. Skip it if you'd rather rest.",q:"Art in Paradise Chiang Mai"},
  {day:1,slot:"Evening",time:"5:00",name:"Kad Kongkao / Lanna Square",note:"Friday-only walking street, food court next door.",cid:"1060688020538713953"},
  {day:1,slot:"Evening",time:"6:30",name:"Chang Phueak (North Gate) Market",note:"Dinner: famous stewed pork leg stall. Expect a queue.",cid:"8054357250613599001"},
  {day:1,slot:"Evening",time:"8:00",name:"Night Bazaar",note:"Shopping stroll on Chang Klan Rd.",cid:"805850765827944477"},
@@ -93,8 +93,8 @@ const STOPS = [
 const R=(o,d,w)=>"https://www.google.com/maps/dir/?api=1&travelmode=driving&origin="+encodeURIComponent(o)+"&destination="+encodeURIComponent(d)+(w&&w.length?"&waypoints="+encodeURIComponent(w.join("|")):"");
 const HOTEL="Moose Easy Hotel Fa Ham Chiang Mai";
 const ROUTES={
- 1:[["Drive in","Hot Spring → Central Festival (lunch)",R("Mae Kachan Hot Spring Wiang Pa Pao","Central Festival Chiang Mai",[])],
-    ["Afternoon","Hotel → Tha Phae Gate → Art in Paradise",R(HOTEL,"Art in Paradise Chiang Mai",["Tha Phae Gate Chiang Mai"])],
+ 1:[["Drive in","Hot Spring → Tha Phae Gate → Central (lunch) → Hotel",R("Mae Kachan Hot Spring Wiang Pa Pao",HOTEL,["Tha Phae Gate Chiang Mai","Central Festival Chiang Mai"])],
+    ["Afternoon","Hotel → Art in Paradise",R(HOTEL,"Art in Paradise Chiang Mai",[])],
     ["Evening markets","Kad Kongkao → Chang Phueak → Night Bazaar",R("Art in Paradise Chiang Mai","Chiang Mai Night Bazaar",["Kad Kongkao Lanna Square Chiang Mai","Chang Phueak Night Market Chiang Mai"])]],
  2:[["Morning markets","Jing Jai → Thanin → Warorot → Muang Mai",R(HOTEL,"Muang Mai Market Chiang Mai",["Jing Jai Market Chiang Mai","Thanin Market Chiang Mai","Warorot Market Chiang Mai"])],
     ["Afternoon","Hotel → Huay Tung Tao → One Nimman → Baan Kang Wat",R("Muang Mai Market Chiang Mai","Baan Kang Wat Chiang Mai",[HOTEL,"Huay Tung Tao Lake Chiang Mai","One Nimman Chiang Mai"])],
