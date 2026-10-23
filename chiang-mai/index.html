@@ -82,13 +82,14 @@ const STOPS = [
 
  {day:2,slot:"Early markets",time:"7:00",name:"Jing Jai Market",note:"Weekend farmers' and craft market. Own car park. Grab breakfast here.",cid:"11511114691515616006"},
  {day:2,slot:"Early markets",time:"8:00",name:"Thanin Market (Siri Wattana)",note:"5 min away. Local cooked food and fruit.",cid:"5114455481968313788"},
- {day:2,slot:"Early markets",time:"9:00",name:"Warorot Market",note:"Moved from Friday. Northern sausage, snacks, cheap souvenirs.",cid:"2648256326189542464"},
+ {day:2,slot:"Early markets",time:"9:00",name:"Warorot Market ★ Mark Wiens pick",note:"Mark Wiens: moo tod (fried pork) at Dam Rong (ดำรงค์), plus cab moo, nam prik noom and moo yor to take home. Food is on the lower floors. Try sour ma prang dipped in chili sauce outside.",cid:"2648256326189542464"},
  {day:2,slot:"Early markets",time:"9:45",name:"Ton Lam Yai Market",note:"Next door to Warorot: dried fruit, spices, flowers.",cid:"8774498114757061699"},
  {day:2,slot:"Early markets",time:"10:15",name:"Muang Mai Market",note:"Big wholesale fruit and veg market by the river, 5 min from Warorot. Cheap fresh fruit for the road.",q:"Muang Mai Market Chiang Mai"},
  {day:2,slot:"Early markets",time:"11:30",name:"Check out: Moose EASY Hotel",note:"Shower, pack and check out before 12:00.",q:"Moose Easy Hotel Fa Ham Chiang Mai"},
  {day:2,slot:"Afternoon",time:"12:30",name:"Huay Tung Tao Lake",note:"Lunch in bamboo huts over the water, mountain views. About 25 min north. Small entry fee.",cid:"3473402653889272717"},
- {day:2,slot:"Afternoon",time:"2:30",name:"Nimman Road + One Nimman",note:"Trendy street of cafés and small shops. One Nimman has air-con and a weekend craft market.",cid:"4179123163732524983"},
- {day:2,slot:"Afternoon",time:"3:45",name:"Baan Kang Wat",note:"Artist village with craft shops, pottery and cafés in the trees. Open till 6pm.",cid:"6561582910531882655"},
+ {day:2,slot:"Afternoon",time:"2:15",name:"Nimman Road + One Nimman",note:"Trendy street of cafés and small shops. One Nimman has air-con and a weekend craft market.",cid:"4179123163732524983"},
+ {day:2,slot:"Afternoon",time:"3:15",name:"Ton Payom Market ★ Mark Wiens pick",note:"Behind Chiang Mai University. Mark Wiens says the sai ua (northern sausage) here beats Warorot. Northern snacks to take home. Closes about 5pm.",q:"Ton Payom Market Chiang Mai"},
+ {day:2,slot:"Afternoon",time:"4:00",name:"Baan Kang Wat",note:"Artist village with craft shops, pottery and cafés in the trees. Open till 6pm.",cid:"6561582910531882655"},
  {day:2,slot:"Evening",time:"5:00",name:"Kad Na Mor (CMU Market)",note:"Student market. Parking about 20 baht.",cid:"16039942507088366045"},
  {day:2,slot:"Evening",time:"6:15",name:"Chiang Mai Gate Market",note:"Park nearby before 6pm. Cheap khao soi.",cid:"14501863873841167432"},
  {day:2,slot:"Evening",time:"7:30",name:"Wua Lai Saturday Walking Street",note:"Main event until about 11pm.",cid:"9528490394611933464"}
@@ -100,7 +101,8 @@ const ROUTES={
     ["To the hotel","Tha Phae Gate → Hotel",R("Tha Phae Gate Chiang Mai",HOTEL,[])],
     ["Evening markets","Hotel → Kad Kongkao → Chang Phueak → Ploen Ruedee",R(HOTEL,"Ploen Ruedee Night Market Chiang Mai",["Kad Kongkao Lanna Square Chiang Mai","Chang Phueak Night Market Chiang Mai"])]],
  2:[["Morning markets","Jing Jai → Thanin → Warorot → Muang Mai",R(HOTEL,"Muang Mai Market Chiang Mai",["Jing Jai Market Chiang Mai","Thanin Market Chiang Mai","Warorot Market Chiang Mai"])],
-    ["Afternoon","Hotel → Huay Tung Tao → One Nimman → Baan Kang Wat",R("Muang Mai Market Chiang Mai","Baan Kang Wat Chiang Mai",[HOTEL,"Huay Tung Tao Lake Chiang Mai","One Nimman Chiang Mai"])],
+    ["Midday","Muang Mai → Hotel (check-out) → Huay Tung Tao",R("Muang Mai Market Chiang Mai","Huay Tung Tao Lake Chiang Mai",[HOTEL])],
+    ["Afternoon","One Nimman → Ton Payom → Baan Kang Wat",R("Huay Tung Tao Lake Chiang Mai","Baan Kang Wat Chiang Mai",["One Nimman Chiang Mai","Ton Payom Market Chiang Mai"])],
     ["Evening","Kad Na Mor → Chiang Mai Gate (walk to Wua Lai)",R("Baan Kang Wat Chiang Mai","Chiang Mai Gate Market",["Kad Na Mor Chiang Mai University"])]]
 };
 const gm=s=>s.cid?"https://maps.google.com/?cid="+s.cid:"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(s.q);
