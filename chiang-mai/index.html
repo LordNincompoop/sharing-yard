@@ -67,12 +67,12 @@ a:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:4
 const STOPS = [
  {day:1,slot:"On the way from Mae Chan",time:"10:45",name:"Leave Mae Kachan Hot Spring",note:"About 1 hr 15 min to Tha Phae Gate.",q:"Mae Kachan Hot Spring Wiang Pa Pao"},
  {day:1,slot:"Midday",time:"~12:15",name:"Tha Phae Gate + lunch",note:"Done: photos at the gate and lunch nearby.",q:"Tha Phae Gate Chiang Mai"},
- {day:1,slot:"Afternoon",time:"~1:50",name:"Wat Chedi Luang",note:"Giant ruined chedi in the middle of the Old City, about 5 min drive from Tha Phae Gate. Allow 30–40 min. Cover shoulders and knees.",cid:"6698946777536243898"},
- {day:1,slot:"Afternoon",time:"~2:45",name:"Art in Paradise",note:"3D illusion art museum, fun photos, air-con. About 10 min drive. Allow about 1 hour.",q:"Art in Paradise Chiang Mai"},
- {day:1,slot:"Afternoon",time:"~4:00",name:"Check in: Moose EASY Hotel",note:"Rest an hour before the evening markets.",q:"Moose Easy Hotel Fa Ham Chiang Mai"},
- {day:1,slot:"Evening",time:"~5:15",name:"Kad Kongkao / Lanna Square",note:"Friday-only walking street. Crafts and snacks. Go early: public holiday crowds and parking.",cid:"1060688020538713953"},
- {day:1,slot:"Evening",time:"~6:15",name:"Chang Phueak (North Gate) Market",note:"Early dinner: famous stewed pork leg (khao kha moo) stall. Expect a queue. 5 min from Kongkao.",cid:"8054357250613599001"},
- {day:1,slot:"Evening",time:"~7:15",name:"Kad Na Mor (CMU Market)",note:"Main event tonight. Local student market by Chiang Mai University: cheap street food, desserts, clothes. Busiest Thu–Sun. About 10 min drive. Parking about 20 baht.",cid:"16039942507088366045"},
+ {day:1,slot:"Afternoon",time:"~1:50",name:"Wat Chedi Luang + Art in Paradise",note:"Done.",q:"Art in Paradise Chiang Mai"},
+ {day:1,slot:"Afternoon",time:"~4:30",name:"Early dinner",note:"Done: eating now.",q:"Art in Paradise Chiang Mai"},
+ {day:1,slot:"Evening",time:"~5:15",name:"Check in: Moose EASY Hotel",note:"Rest a bit before heading out.",q:"Moose Easy Hotel Fa Ham Chiang Mai"},
+ {day:1,slot:"Evening",time:"~6:30",name:"Kad Kongkao / Lanna Square",note:"Friday-only walking street. Crafts and snacks. Parking may be tight on the holiday.",cid:"1060688020538713953"},
+ {day:1,slot:"Evening",time:"~7:15",name:"Chang Phueak (North Gate) Market",opt:1,note:"Already ate, so just a snack stop. The stewed pork leg stall can sell out by evening. 5 min from Kongkao.",cid:"8054357250613599001"},
+ {day:1,slot:"Evening",time:"~7:45",name:"Kad Na Mor (CMU Market)",note:"Main event tonight. Local student market at CMU's front gate (กาดหน้ามอ): desserts, bubble tea, snacks, cheap clothes. About 10 min drive. Parking about 20 baht.",cid:"16039942507088366045"},
 
  {day:2,slot:"Early markets",time:"7:00",name:"Jing Jai Market",note:"Weekend farmers' and craft market. Own car park. Grab breakfast here.",cid:"11511114691515616006"},
  {day:2,slot:"Early markets",time:"8:00",name:"Thanin Market (Siri Wattana)",note:"5 min away. Local cooked food and fruit.",cid:"5114455481968313788"},
@@ -91,7 +91,7 @@ const R=(o,d,w)=>"https://www.google.com/maps/dir/?api=1&travelmode=driving&orig
 const HOTEL="Moose Easy Hotel Fa Ham Chiang Mai";
 const ROUTES={
  1:[["Drive in","Hot Spring → Tha Phae Gate",R("Mae Kachan Hot Spring Wiang Pa Pao","Tha Phae Gate Chiang Mai",[])],
-    ["Afternoon","Tha Phae Gate → Wat Chedi Luang → Art in Paradise → Hotel",R("Tha Phae Gate Chiang Mai",HOTEL,["Wat Chedi Luang Chiang Mai","Art in Paradise Chiang Mai"])],
+    ["To the hotel","Art in Paradise → Hotel",R("Art in Paradise Chiang Mai",HOTEL,[])],
     ["Evening markets","Hotel → Kad Kongkao → Chang Phueak → Kad Na Mor",R(HOTEL,"Kad Na Mor Chiang Mai University",["Kad Kongkao Lanna Square Chiang Mai","Chang Phueak Night Market Chiang Mai"])]],
  2:[["Morning markets","Jing Jai → Thanin → Warorot → Muang Mai",R(HOTEL,"Muang Mai Market Chiang Mai",["Jing Jai Market Chiang Mai","Thanin Market Chiang Mai","Warorot Market Chiang Mai"])],
     ["Midday","Muang Mai → Hotel (check-out) → Huay Tung Tao",R("Muang Mai Market Chiang Mai","Huay Tung Tao Lake Chiang Mai",[HOTEL])],
