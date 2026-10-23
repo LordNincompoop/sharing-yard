@@ -73,12 +73,12 @@ const STOPS = [
  {day:1,slot:"Afternoon",time:"~1:45",name:"Drive to hotel",note:"About 15–20 min from Tha Phae Gate.",q:"Moose Easy Hotel Fa Ham Chiang Mai"},
  {day:1,slot:"Afternoon",time:"2:00",name:"Check in: Moose EASY Hotel",note:"Check-in after 14:00. Rest a bit.",q:"Moose Easy Hotel Fa Ham Chiang Mai"},
  {day:1,slot:"Afternoon",time:"~3:30",name:"Central Festival or Art in Paradise",opt:1,note:"Central is next door to the hotel: air-con, shops, snacks. Art in Paradise is a 3D photo museum, about 1 hour, 15 min drive.",q:"Central Festival Chiang Mai"},
- {day:1,slot:"Evening",time:"5:00",name:"Kad Kongkao / Lanna Square",note:"Friday-only walking street, food court next door.",cid:"1060688020538713953"},
- {day:1,slot:"Evening",time:"6:30",name:"Chang Phueak (North Gate) Market",note:"Dinner: famous stewed pork leg stall. Expect a queue.",cid:"8054357250613599001"},
- {day:1,slot:"Evening",time:"8:00",name:"Night Bazaar",note:"Shopping stroll on Chang Klan Rd.",cid:"805850765827944477"},
- {day:1,slot:"Evening",time:"8:45",name:"Ploen Ruedee Night Market",note:"Food stalls and live music.",cid:"7196595335537976964"},
- {day:1,slot:"Evening",time:"9:15",name:"Kalare Night Bazaar",note:"Inside the Night Bazaar zone.",cid:"13876118437728147131"},
- {day:1,slot:"Evening",time:"9:45",name:"Anusarn Market",note:"Last stop: late snack at the food court.",cid:"561859415891005858"},
+ {day:1,slot:"Evening",time:"5:00",name:"#1 Kad Kongkao / Lanna Square",note:"Friday-only, so don't miss it. Crafts and snacks, food court next door. Go early: public holiday crowds and parking.",cid:"1060688020538713953"},
+ {day:1,slot:"Evening",time:"6:30",name:"#2 Chang Phueak (North Gate) Market",note:"Dinner. Famous stewed pork leg (khao kha moo) stall with the cowboy-hat lady. Expect a queue.",cid:"8054357250613599001"},
+ {day:1,slot:"Evening",time:"8:00",name:"#3 Ploen Ruedee Night Market",note:"Sit down and relax: food trucks, drinks, live music. Park here, the next three are walking distance.",cid:"7196595335537976964"},
+ {day:1,slot:"Evening",time:"8:45",name:"#4 Night Bazaar",opt:1,note:"Biggest for souvenirs and clothes. Touristy, so bargain.",cid:"805850765827944477"},
+ {day:1,slot:"Evening",time:"9:15",name:"#5 Kalare Night Bazaar",opt:1,note:"Inside the Night Bazaar zone. Quick look on the way past.",cid:"13876118437728147131"},
+ {day:1,slot:"Evening",time:"9:45",name:"#6 Anusarn Market",opt:1,note:"Only if you still have energy. Seafood restaurants and late snacks.",cid:"561859415891005858"},
 
  {day:2,slot:"Early markets",time:"7:00",name:"Jing Jai Market",note:"Weekend farmers' and craft market. Own car park. Grab breakfast here.",cid:"11511114691515616006"},
  {day:2,slot:"Early markets",time:"8:00",name:"Thanin Market (Siri Wattana)",note:"5 min away. Local cooked food and fruit.",cid:"5114455481968313788"},
@@ -98,7 +98,7 @@ const HOTEL="Moose Easy Hotel Fa Ham Chiang Mai";
 const ROUTES={
  1:[["Drive in","Hot Spring → Tha Phae Gate",R("Mae Kachan Hot Spring Wiang Pa Pao","Tha Phae Gate Chiang Mai",[])],
     ["To the hotel","Tha Phae Gate → Hotel",R("Tha Phae Gate Chiang Mai",HOTEL,[])],
-    ["Evening markets","Hotel → Kad Kongkao → Chang Phueak → Night Bazaar",R(HOTEL,"Chiang Mai Night Bazaar",["Kad Kongkao Lanna Square Chiang Mai","Chang Phueak Night Market Chiang Mai"])]],
+    ["Evening markets","Hotel → Kad Kongkao → Chang Phueak → Ploen Ruedee",R(HOTEL,"Ploen Ruedee Night Market Chiang Mai",["Kad Kongkao Lanna Square Chiang Mai","Chang Phueak Night Market Chiang Mai"])]],
  2:[["Morning markets","Jing Jai → Thanin → Warorot → Muang Mai",R(HOTEL,"Muang Mai Market Chiang Mai",["Jing Jai Market Chiang Mai","Thanin Market Chiang Mai","Warorot Market Chiang Mai"])],
     ["Afternoon","Hotel → Huay Tung Tao → One Nimman → Baan Kang Wat",R("Muang Mai Market Chiang Mai","Baan Kang Wat Chiang Mai",[HOTEL,"Huay Tung Tao Lake Chiang Mai","One Nimman Chiang Mai"])],
     ["Evening","Kad Na Mor → Chiang Mai Gate (walk to Wua Lai)",R("Baan Kang Wat Chiang Mai","Chiang Mai Gate Market",["Kad Na Mor Chiang Mai University"])]]
