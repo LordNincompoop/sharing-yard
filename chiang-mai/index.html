@@ -39,6 +39,8 @@ h2{font:800 22px/1.2 var(--display);margin:0;text-wrap:balance}
 .slot{font:600 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:8px 0 0}
 ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 li{display:grid;grid-template-columns:52px 1fr;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+li.top{border:2.5px solid var(--ink)}
+.must{display:inline-block;font:700 10.5px var(--body);letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:var(--bg);border-radius:999px;padding:2px 8px;margin-bottom:4px}
 .time{font:600 14px var(--body);font-variant-numeric:tabular-nums;color:var(--muted);padding-top:1px}
 .body{min-width:0}
 .name{font:600 16px/1.3 var(--display);margin:0}
@@ -75,17 +77,17 @@ const STOPS = [
  {day:1,slot:"Evening",time:"~8:30",name:"Chang Phueak (North Gate) Market",opt:1,note:"Late snack, 5 min from Kongkao. The stewed pork leg stall may be sold out by now.",cid:"8054357250613599001"},
 
  {day:2,slot:"Early markets",time:"7:00",name:"Jing Jai Market",note:"Weekend farmers' and craft market. Own car park. Grab breakfast here.",cid:"11511114691515616006"},
- {day:2,slot:"Early markets",time:"8:00",name:"Thanin Market (Siri Wattana)",note:"5 min away. Local cooked food and fruit.",cid:"5114455481968313788"},
+ {day:2,slot:"Early markets",time:"8:00",name:"Thanin Market (Siri Wattana)",opt:1,note:"5 min away. Local cooked food and fruit.",cid:"5114455481968313788"},
  {day:2,slot:"Early markets",time:"9:00",name:"Warorot Market ★ Mark Wiens pick",note:"Mark Wiens: moo tod (fried pork) at Dam Rong (ดำรงค์), plus cab moo, nam prik noom and moo yor to take home. Food is on the lower floors. Try sour ma prang dipped in chili sauce outside.",cid:"2648256326189542464"},
  {day:2,slot:"Early markets",time:"9:45",name:"Ton Lam Yai Market",note:"Next door to Warorot: dried fruit, spices, flowers.",cid:"8774498114757061699"},
- {day:2,slot:"Early markets",time:"10:15",name:"Muang Mai Market",note:"Big wholesale fruit and veg market by the river, 5 min from Warorot. Cheap fresh fruit for the road.",q:"Muang Mai Market Chiang Mai"},
+ {day:2,slot:"Early markets",time:"10:15",name:"Muang Mai Market",opt:1,note:"Big wholesale fruit and veg market by the river, 5 min from Warorot. Cheap fresh fruit for the road.",q:"Muang Mai Market Chiang Mai"},
  {day:2,slot:"Early markets",time:"10:45",name:"Khao Soi Khun Yai ★ Mark Wiens pick",note:"His “best khao soi in Chiang Mai?” pick. Get the beef (khao soi neua). Taste first, then add the roasted chili. Open 10am–2pm, closed Sundays, so today only. Sri Poom Rd, north Old City. Thai-only sign, in front of Wat Kuan Kama.",q:"Khao Soi Khun Yai Chiang Mai"},
  {day:2,slot:"Early markets",time:"11:30",name:"Check out: Moose EASY Hotel",note:"Shower, pack and check out before 12:00.",q:"Moose Easy Hotel Fa Ham Chiang Mai"},
- {day:2,slot:"Afternoon",time:"12:00",name:"Huay Tung Tao Lake",note:"Short stop: relax in bamboo huts over the water with drinks and snacks, mountain views. You'll still be full from khao soi. About 25 min north. Small entry fee.",cid:"3473402653889272717"},
+ {day:2,slot:"Afternoon",time:"12:00",name:"Huay Tung Tao Lake",opt:1,note:"Skip if short on time. Short stop: relax in bamboo huts over the water with drinks and snacks, mountain views. You'll still be full from khao soi. About 25 min north. Small entry fee.",cid:"3473402653889272717"},
  {day:2,slot:"Afternoon",time:"1:30",name:"Baan Kang Wat",note:"Artist village with craft shops, pottery and cafés in the trees. Open 10am–6pm, closed Mondays. (Its morning market is Sundays only.)",cid:"6561582910531882655"},
  {day:2,slot:"Afternoon",time:"2:30",name:"Ton Payom Market ★ Mark Wiens pick",note:"5 min from Baan Kang Wat, behind Chiang Mai University. Mark Wiens says the sai ua (northern sausage) here beats Warorot. Northern snacks to take home. Closes about 5pm.",q:"Ton Payom Market Chiang Mai"},
  {day:2,slot:"Afternoon",time:"3:15",name:"Tong Tem Toh ★ Mark Wiens pick",note:"His northern Thai feast spot on Nimman Soi 13. Late lunch on Nimman: sai ua, crispy pork rinds, nam prik noom, grilled pork. Open 8am–11pm.",cid:"",q:"Tong Tem Toh Nimman Chiang Mai"},
- {day:2,slot:"Afternoon",time:"4:15",name:"Nimman Road + One Nimman",note:"Trendy street of cafés and small shops. One Nimman has air-con and a weekend craft market.",cid:"4179123163732524983"},
+ {day:2,slot:"Afternoon",time:"4:15",name:"Nimman Road + One Nimman",opt:1,note:"Trendy street of cafés and small shops. One Nimman has air-con and a weekend craft market.",cid:"4179123163732524983"},
  {day:2,slot:"Evening",time:"5:30",name:"Chiang Mai Gate Market",note:"Park nearby before 6pm. Cheap khao soi.",cid:"14501863873841167432"},
  {day:2,slot:"Evening",time:"6:30",name:"Wua Lai Saturday Walking Street",note:"Main event until about 11pm.",cid:"9528490394611933464"}
 ];
@@ -109,7 +111,8 @@ let html="";
   let slot="";
   stops.forEach(s=>{
     if(s.slot!==slot){ if(slot) html+="</ol>"; slot=s.slot; html+=`<p class="slot">${esc(slot)}</p><ol>`; }
-    html+=`<li><span class="time">${s.time}</span><div class="body"><p class="name">${esc(s.name)}${s.opt?'<span class="opt">Optional</span>':''}</p><p class="note">${esc(s.note)}</p><a class="map" href="${gm(s)}" target="_blank" rel="noopener">Google Maps ↗</a></div></li>`;
+    const top=s.name.includes("★");
+    html+=`<li${top?' class="top"':''}><span class="time">${s.time}</span><div class="body">${top?'<span class="must">Top priority · Mark Wiens</span>':''}<p class="name">${esc(s.name)}${s.opt?'<span class="opt">Optional</span>':''}</p><p class="note">${esc(s.note)}</p><a class="map" href="${gm(s)}" target="_blank" rel="noopener">Google Maps ↗</a></div></li>`;
   });
   html+="</ol></section>";
 });
